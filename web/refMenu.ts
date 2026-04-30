@@ -195,68 +195,38 @@ export function buildRefContextMenuItems(
     copyType = "Tag Name";
   } else if (isRemoteCombined || sourceElem.classList.contains("remote")) {
     const parsed = parseRemoteRef(refName);
+    const deleteRemoteBranchItem: ContextMenuItem = {
+      title: `Delete Remote Branch${ELLIPSIS}`,
+      onClick: () => {
+        showConfirmationDialog(
+          `Are you sure you want to delete the remote branch <b><i>${escapeHtml(refName)}</i></b>?`,
+          () => {
+            sendMessage({
+              command: "deleteRemoteBranch",
+              repo: repo,
+              remoteName: parsed.remoteName,
+              branchName: parsed.branchName
+            });
+          },
+          null
+        );
+      }
+    };
     menu = [
       {
         title: `Checkout Branch${ELLIPSIS}`,
         onClick: () => checkoutBranchAction(repo, sourceElem, refName, isRemoteCombined)
       },
+      buildMergeBranchMenuItem(repo, refName),
+      null,
       {
-        title: `Delete Remote Branch${ELLIPSIS}`,
-        onClick: () => {
-          showConfirmationDialog(
-            `Are you sure you want to delete the remote branch <b><i>${escapeHtml(refName)}</i></b>?`,
-            () => {
-              sendMessage({
-                command: "deleteRemoteBranch",
-                repo: repo,
-                remoteName: parsed.remoteName,
-                branchName: parsed.branchName
-              });
-            },
-            null
-          );
-        }
-      },
-      buildMergeBranchMenuItem(repo, refName)
+        title: "More...",
+        submenu: [deleteRemoteBranchItem]
+      }
     ];
     copyType = "Branch Name";
   } else {
-    menu = [];
-    if (gitBranchHead !== refName) {
-      menu.push({
-        title: "Checkout Branch",
-        onClick: () => checkoutBranchAction(repo, sourceElem, refName)
-      });
-    }
-    if (gitBranchHead === refName) {
-      menu.push(
-        {
-          title: "Pull",
-          onClick: () => {
-            showConfirmationDialog(
-              `Are you sure you want to pull into <b><i>${escapeHtml(refName)}</i></b>?`,
-              () => {
-                sendMessage({ command: "pull", repo: repo });
-              },
-              null
-            );
-          }
-        },
-        {
-          title: "Push",
-          onClick: () => {
-            showConfirmationDialog(
-              `Are you sure you want to push <b><i>${escapeHtml(refName)}</i></b>?`,
-              () => {
-                sendMessage({ command: "push", repo: repo });
-              },
-              null
-            );
-          }
-        }
-      );
-    }
-    menu.push({
+    const renameBranchItem: ContextMenuItem = {
       title: `Rename Branch${ELLIPSIS}`,
       onClick: () => {
         const renameWorktreeWarning =
@@ -282,143 +252,216 @@ export function buildRefContextMenuItems(
           null
         );
       }
-    });
-    if (gitBranchHead !== refName) {
-      const resolvedRemotes = Array.isArray(remotes) && remotes.length > 0 ? remotes : [];
-      menu.push(
+    };
+    const worktreeItems: ContextMenuItem[] =
+      worktreeInfo === null || worktreeInfo === undefined
+        ? []
+        : [
+            {
+              title: "Open in New Window",
+              onClick: () => {
+                sendMessage({
+                  command: "openWorktreeInNewWindow",
+                  repo: repo,
+                  path: worktreeInfo.path
+                });
+              }
+            },
+            {
+              title: "Reveal in File Manager",
+              onClick: () => {
+                sendMessage({
+                  command: "revealWorktreeInOS",
+                  repo: repo,
+                  path: worktreeInfo.path
+                });
+              }
+            },
+            {
+              title: "Open Terminal Here",
+              onClick: () => {
+                sendMessage({
+                  command: "openTerminal",
+                  repo: repo,
+                  path: worktreeInfo.path,
+                  name: `Worktree: ${refName}`
+                });
+              }
+            },
+            {
+              title: "Copy Worktree Path",
+              onClick: () => {
+                sendMessage({
+                  command: "copyToClipboard",
+                  type: "worktreePath",
+                  data: worktreeInfo.path
+                });
+              }
+            }
+          ];
+
+    const createWorktreeItem: ContextMenuItem | null =
+      worktreeInfo === null || worktreeInfo === undefined
+        ? {
+            title: `Create Worktree${ELLIPSIS}`,
+            onClick: () => {
+              const repoName = getRepoName(repo);
+              const defaultPath = `../${repoName}-${sanitizeBranchNameForPath(refName)}`;
+              showFormDialog(
+                `Create worktree for branch <b><i>${escapeHtml(refName)}</i></b>:`,
+                [
+                  {
+                    type: "text" as const,
+                    name: "Path: ",
+                    default: defaultPath,
+                    placeholder: null
+                  },
+                  {
+                    type: "checkbox" as const,
+                    name: "Open Terminal",
+                    value: viewState.dialogDefaults.createWorktree.openTerminal
+                  }
+                ],
+                "Create Worktree",
+                (values) => {
+                  sendMessage({
+                    command: "createWorktree",
+                    repo: repo,
+                    path: values[0],
+                    branchName: refName,
+                    openTerminal: values[1] === "checked"
+                  });
+                },
+                sourceElem
+              );
+            }
+          }
+        : null;
+
+    const resolvedRemotes = Array.isArray(remotes) && remotes.length > 0 ? remotes : [];
+    const deleteBranchItem: ContextMenuItem = {
+      title: `Delete Branch${ELLIPSIS}`,
+      onClick: () => showDeleteBranchDialog(repo, refName, resolvedRemotes, worktreeInfo)
+    };
+    const rebaseBranchItem: ContextMenuItem = {
+      title: `Rebase current branch on Branch${ELLIPSIS}`,
+      onClick: () => {
+        showConfirmationDialog(
+          `Are you sure you want to rebase the current branch on <b><i>${escapeHtml(refName)}</i></b>?`,
+          () => {
+            sendMessage({
+              command: "rebaseBranch",
+              repo: repo,
+              branchName: refName
+            });
+          },
+          null
+        );
+      }
+    };
+    const removeWorktreeItem: ContextMenuItem | null =
+      worktreeInfo !== null && worktreeInfo !== undefined && !worktreeInfo.isMainWorktree
+        ? {
+            title: `Remove Worktree${ELLIPSIS}`,
+            onClick: () => {
+              showFormDialog(
+                `Are you sure you want to remove the worktree for branch '${escapeHtml(refName)}' at '${escapeHtml(worktreeInfo.path)}'?`,
+                [
+                  {
+                    type: "checkbox",
+                    name: `Also delete branch '${escapeHtml(refName)}' (git branch -d)`,
+                    value: viewState.dialogDefaults.removeWorktree.deleteBranch,
+                    info: "Uses safe delete — unmerged branches will not be deleted."
+                  }
+                ],
+                "Remove",
+                (values) => {
+                  sendMessage({
+                    command: "removeWorktree",
+                    repo: repo,
+                    worktreePath: worktreeInfo.path,
+                    branchName: refName,
+                    deleteBranch: values[0] === "checked"
+                  });
+                },
+                sourceElem
+              );
+            }
+          }
+        : null;
+
+    if (gitBranchHead === refName) {
+      const baseMenu: ContextMenuElement[] = [
         {
-          title: `Delete Branch${ELLIPSIS}`,
-          onClick: () => showDeleteBranchDialog(repo, refName, resolvedRemotes, worktreeInfo)
-        },
-        buildMergeBranchMenuItem(repo, refName),
-        {
-          title: `Rebase current branch on Branch${ELLIPSIS}`,
+          title: "Pull",
           onClick: () => {
             showConfirmationDialog(
-              `Are you sure you want to rebase the current branch on <b><i>${escapeHtml(refName)}</i></b>?`,
+              `Are you sure you want to pull into <b><i>${escapeHtml(refName)}</i></b>?`,
               () => {
-                sendMessage({
-                  command: "rebaseBranch",
-                  repo: repo,
-                  branchName: refName
-                });
+                sendMessage({ command: "pull", repo: repo });
+              },
+              null
+            );
+          }
+        },
+        {
+          title: "Push",
+          onClick: () => {
+            showConfirmationDialog(
+              `Are you sure you want to push <b><i>${escapeHtml(refName)}</i></b>?`,
+              () => {
+                sendMessage({ command: "push", repo: repo });
               },
               null
             );
           }
         }
-      );
-    }
-    if (worktreeInfo === null || worktreeInfo === undefined) {
-      const repoName = getRepoName(repo);
-      const defaultPath = `../${repoName}-${sanitizeBranchNameForPath(refName)}`;
-      menu.push(null, {
-        title: `Create Worktree${ELLIPSIS}`,
-        onClick: () => {
-          showFormDialog(
-            `Create worktree for branch <b><i>${escapeHtml(refName)}</i></b>:`,
-            [
-              {
-                type: "text" as const,
-                name: "Path: ",
-                default: defaultPath,
-                placeholder: null
-              },
-              {
-                type: "checkbox" as const,
-                name: "Open Terminal",
-                value: viewState.dialogDefaults.createWorktree.openTerminal
-              }
-            ],
-            "Create Worktree",
-            (values) => {
-              sendMessage({
-                command: "createWorktree",
-                repo: repo,
-                path: values[0],
-                branchName: refName,
-                openTerminal: values[1] === "checked"
-              });
-            },
-            sourceElem
-          );
-        }
-      });
+      ];
+
+      menu =
+        worktreeItems.length === 0
+          ? [...baseMenu, null, { title: "More...", submenu: [renameBranchItem] }]
+          : [
+              ...baseMenu,
+              null,
+              ...worktreeItems,
+              null,
+              { title: "More...", submenu: [renameBranchItem] }
+            ];
     } else {
-      menu.push(
-        null,
+      const localBaseMenu: ContextMenuElement[] = [
         {
-          title: "Open in New Window",
-          onClick: () => {
-            sendMessage({
-              command: "openWorktreeInNewWindow",
-              repo: repo,
-              path: worktreeInfo.path
-            });
-          }
+          title: "Checkout Branch",
+          onClick: () => checkoutBranchAction(repo, sourceElem, refName)
         },
-        {
-          title: "Reveal in File Manager",
-          onClick: () => {
-            sendMessage({
-              command: "revealWorktreeInOS",
-              repo: repo,
-              path: worktreeInfo.path
-            });
-          }
-        },
-        {
-          title: "Open Terminal Here",
-          onClick: () => {
-            sendMessage({
-              command: "openTerminal",
-              repo: repo,
-              path: worktreeInfo.path,
-              name: `Worktree: ${refName}`
-            });
-          }
-        },
-        {
-          title: "Copy Worktree Path",
-          onClick: () => {
-            sendMessage({
-              command: "copyToClipboard",
-              type: "worktreePath",
-              data: worktreeInfo.path
-            });
-          }
-        }
-      );
-      if (!worktreeInfo.isMainWorktree) {
-        menu.push({
-          title: `Remove Worktree${ELLIPSIS}`,
-          onClick: () => {
-            showFormDialog(
-              `Are you sure you want to remove the worktree for branch '${escapeHtml(refName)}' at '${escapeHtml(worktreeInfo.path)}'?`,
-              [
-                {
-                  type: "checkbox",
-                  name: `Also delete branch '${escapeHtml(refName)}' (git branch -d)`,
-                  value: viewState.dialogDefaults.removeWorktree.deleteBranch,
-                  info: "Uses safe delete — unmerged branches will not be deleted."
-                }
-              ],
-              "Remove",
-              (values) => {
-                sendMessage({
-                  command: "removeWorktree",
-                  repo: repo,
-                  worktreePath: worktreeInfo.path,
-                  branchName: refName,
-                  deleteBranch: values[0] === "checked"
-                });
-              },
-              sourceElem
-            );
-          }
-        });
+        buildMergeBranchMenuItem(repo, refName),
+        rebaseBranchItem
+      ];
+      const moreSubmenuItems: ContextMenuElement[] = [
+        renameBranchItem,
+        deleteBranchItem,
+        ...(removeWorktreeItem === null ? [] : [removeWorktreeItem])
+      ];
+
+      if (createWorktreeItem !== null) {
+        menu = [
+          ...localBaseMenu,
+          null,
+          createWorktreeItem,
+          null,
+          { title: "More...", submenu: moreSubmenuItems }
+        ];
+      } else {
+        menu = [
+          ...localBaseMenu,
+          null,
+          ...worktreeItems,
+          null,
+          { title: "More...", submenu: moreSubmenuItems }
+        ];
       }
     }
+
     copyType = "Branch Name";
   }
   menu.push(null, {

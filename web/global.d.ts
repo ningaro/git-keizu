@@ -27,7 +27,12 @@ declare global {
     onClick: () => void;
   }
 
-  type ContextMenuElement = ContextMenuItem | null;
+  interface ContextMenuSubmenu {
+    title: string;
+    submenu: ContextMenuElement[];
+  }
+
+  type ContextMenuElement = ContextMenuItem | ContextMenuSubmenu | null;
 
   interface DialogTextInput {
     type: "text";
