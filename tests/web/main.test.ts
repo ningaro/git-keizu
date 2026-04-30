@@ -341,12 +341,38 @@ const MOCK_SELECTOR = "stash@{0}";
 const MOCK_SOURCE_ELEM = {} as HTMLElement;
 
 describe("buildStashContextMenuItems", () => {
+  function isContextMenuItem(item: ContextMenuElement): item is ContextMenuItem {
+    return item !== null && "onClick" in item;
+  }
+
+  function isContextMenuSubmenu(item: ContextMenuElement): item is ContextMenuSubmenu {
+    return item !== null && "submenu" in item;
+  }
+
+  function getMoreSubmenu(items: ContextMenuElement[]): ContextMenuSubmenu {
+    const submenu = items[3];
+    expect(isContextMenuSubmenu(submenu)).toBe(true);
+    return submenu as ContextMenuSubmenu;
+  }
+
+  function getCreateBranchFromStashItem(items: ContextMenuElement[]): ContextMenuItem {
+    const item = getMoreSubmenu(items).submenu[0];
+    expect(isContextMenuItem(item)).toBe(true);
+    return item as ContextMenuItem;
+  }
+
+  function getDropStashItem(items: ContextMenuElement[]): ContextMenuItem {
+    const item = getMoreSubmenu(items).submenu[1];
+    expect(isContextMenuItem(item)).toBe(true);
+    return item as ContextMenuItem;
+  }
+
   beforeEach(() => {
     vi.clearAllMocks();
     vi.mocked(vscode.postMessage).mockClear();
   });
 
-  it("returns 7 items (4 actions + separator + 2 copy) for stash context menu (TC-006)", () => {
+  it("returns 7 items (Apply, Pop, More, separators, copy actions) for stash context menu (TC-006)", () => {
     // Given: stash !== null commit row
     // When: stash context menu items are built
     const items = buildStashContextMenuItems(MOCK_REPO, MOCK_HASH, MOCK_SELECTOR, MOCK_SOURCE_ELEM);
@@ -355,7 +381,7 @@ describe("buildStashContextMenuItems", () => {
     expect(items).toHaveLength(7);
     expect(items[0]).not.toBeNull();
     expect(items[1]).not.toBeNull();
-    expect(items[2]).not.toBeNull();
+    expect(items[2]).toBeNull();
     expect(items[3]).not.toBeNull();
     expect(items[4]).toBeNull();
     expect(items[5]).not.toBeNull();
@@ -363,9 +389,12 @@ describe("buildStashContextMenuItems", () => {
 
     // Verify menu item titles
     expect(items[0]!.title).toContain("Apply Stash");
-    expect(items[1]!.title).toContain("Create Branch from Stash");
-    expect(items[2]!.title).toContain("Pop Stash");
-    expect(items[3]!.title).toContain("Drop Stash");
+    expect(items[1]!.title).toContain("Pop Stash");
+    expect(items[3]!.title).toContain("More...");
+    expect(getMoreSubmenu(items).submenu.map((item) => item?.title ?? null)).toEqual([
+      "Create Branch from Stash&#8230;",
+      "Drop Stash&#8230;"
+    ]);
     expect(items[5]!.title).toBe("Copy Stash Name to Clipboard");
     expect(items[6]!.title).toBe("Copy Stash Hash to Clipboard");
   });
@@ -425,7 +454,7 @@ describe("buildStashContextMenuItems", () => {
     const items = buildStashContextMenuItems(MOCK_REPO, MOCK_HASH, MOCK_SELECTOR, MOCK_SOURCE_ELEM);
 
     // When: "Pop Stash..." is clicked and confirmed
-    items[2]!.onClick();
+    items[1]!.onClick();
     expect(showCheckboxDialog).toHaveBeenCalledTimes(1);
     const onConfirm = vi.mocked(showCheckboxDialog).mock.calls[0][4];
     onConfirm(false);
@@ -444,7 +473,7 @@ describe("buildStashContextMenuItems", () => {
     const items = buildStashContextMenuItems(MOCK_REPO, MOCK_HASH, MOCK_SELECTOR, MOCK_SOURCE_ELEM);
 
     // When: "Drop Stash..." is clicked
-    items[3]!.onClick();
+    getDropStashItem(items).onClick();
 
     // Then: showConfirmationDialog is called
     expect(showConfirmationDialog).toHaveBeenCalledTimes(1);
@@ -453,7 +482,7 @@ describe("buildStashContextMenuItems", () => {
   it("sends dropStash message when Drop is confirmed (TC-012)", () => {
     // Given: stash context menu items
     const items = buildStashContextMenuItems(MOCK_REPO, MOCK_HASH, MOCK_SELECTOR, MOCK_SOURCE_ELEM);
-    items[3]!.onClick();
+    getDropStashItem(items).onClick();
 
     // When: confirmation dialog is confirmed
     const onConfirm = vi.mocked(showConfirmationDialog).mock.calls[0][1];
@@ -472,7 +501,7 @@ describe("buildStashContextMenuItems", () => {
     const items = buildStashContextMenuItems(MOCK_REPO, MOCK_HASH, MOCK_SELECTOR, MOCK_SOURCE_ELEM);
 
     // When: "Create Branch from Stash..." is clicked
-    items[1]!.onClick();
+    getCreateBranchFromStashItem(items).onClick();
 
     // Then: showRefInputDialog is called
     expect(showRefInputDialog).toHaveBeenCalledTimes(1);
@@ -481,7 +510,7 @@ describe("buildStashContextMenuItems", () => {
   it("sends branchFromStash message when Branch dialog is confirmed (TC-014)", () => {
     // Given: stash context menu items
     const items = buildStashContextMenuItems(MOCK_REPO, MOCK_HASH, MOCK_SELECTOR, MOCK_SOURCE_ELEM);
-    items[1]!.onClick();
+    getCreateBranchFromStashItem(items).onClick();
 
     // When: branch name is entered and confirmed
     const onConfirm = vi.mocked(showRefInputDialog).mock.calls[0][3];

@@ -28,21 +28,55 @@ vi.mock("../../web/utils", () => {
 });
 
 import { buildCommitContextMenuItems } from "../../web/commitMenu";
-import { showFormDialog } from "../../web/dialogs";
+import { showFormDialog, showSelectDialog } from "../../web/dialogs";
 import { sanitizeBranchNameForPath, sendMessage } from "../../web/utils";
 
 const REPO = "/test/repo";
 const HASH = "abc1234567890def";
 const PARENT_HASHES = ["parent1234567890"];
 
+function isContextMenuItem(item: ContextMenuElement): item is ContextMenuItem {
+  return item !== null && "onClick" in item;
+}
+
+function isContextMenuSubmenu(item: ContextMenuElement): item is ContextMenuSubmenu {
+  return item !== null && "submenu" in item;
+}
+
 function createMockElement(): HTMLElement {
   return document.createElement("div");
 }
 
-function getCreateBranchItem() {
+function findTopLevelMenuItem(items: ContextMenuElement[], title: string): ContextMenuItem {
+  const item = items.find(
+    (menuItem): menuItem is ContextMenuItem =>
+      isContextMenuItem(menuItem) && menuItem.title === title
+  );
+  expect(item).toBeDefined();
+  return item!;
+}
+
+function getMoreSubmenu(items: ContextMenuElement[]): ContextMenuSubmenu {
+  const moreItem = items.find(
+    (menuItem): menuItem is ContextMenuSubmenu =>
+      isContextMenuSubmenu(menuItem) && menuItem.title === "More..."
+  );
+  expect(moreItem).toBeDefined();
+  return moreItem!;
+}
+
+function findSubmenuItem(items: ContextMenuElement[], title: string): ContextMenuItem {
+  const submenuItem = getMoreSubmenu(items).submenu.find(
+    (menuItem): menuItem is ContextMenuItem =>
+      isContextMenuItem(menuItem) && menuItem.title === title
+  );
+  expect(submenuItem).toBeDefined();
+  return submenuItem!;
+}
+
+function getCreateBranchItem(): ContextMenuItem {
   const items = buildCommitContextMenuItems(REPO, HASH, PARENT_HASHES, [], {}, createMockElement());
-  // "Create Branch..." is the second item (index 1)
-  return items[1]!;
+  return findTopLevelMenuItem(items, "Create Branch&#8230;");
 }
 
 describe("Create Branch dialog (S1)", () => {
@@ -162,7 +196,7 @@ describe("Merge dialog (S2)", () => {
     };
   }
 
-  function getMergeItem() {
+  function getMergeItem(): ContextMenuItem {
     const items = buildCommitContextMenuItems(
       REPO,
       HASH,
@@ -171,8 +205,7 @@ describe("Merge dialog (S2)", () => {
       {},
       createMockElement()
     );
-    // "Merge into current branch..." is after the second null separator
-    return items.find((item) => item !== null && item.title.includes("Merge into current branch"))!;
+    return findTopLevelMenuItem(items, "Merge into current branch&#8230;");
   }
 
   beforeEach(() => {
@@ -381,7 +414,7 @@ describe("Cherry-pick dialog (S3)", () => {
     };
   }
 
-  function getCherryPickItem(parentHashes: string[] = PARENT_HASHES) {
+  function getCherryPickItem(parentHashes: string[] = PARENT_HASHES): ContextMenuItem {
     const items = buildCommitContextMenuItems(
       REPO,
       HASH,
@@ -390,7 +423,7 @@ describe("Cherry-pick dialog (S3)", () => {
       MOCK_LOOKUP,
       createMockElement()
     );
-    return items.find((item) => item !== null && item.title.includes("Cherry Pick"))!;
+    return findTopLevelMenuItem(items, "Cherry Pick&#8230;");
   }
 
   beforeEach(() => {
@@ -514,7 +547,7 @@ describe("Create Worktree Here dialog (S4)", () => {
     };
   }
 
-  function getCreateWorktreeItem() {
+  function getCreateWorktreeItem(): ContextMenuItem {
     const items = buildCommitContextMenuItems(
       REPO,
       HASH,
@@ -523,7 +556,7 @@ describe("Create Worktree Here dialog (S4)", () => {
       {},
       createMockElement()
     );
-    return items.find((item) => item !== null && item.title.includes("Create Worktree Here"))!;
+    return findTopLevelMenuItem(items, "Create Worktree Here&#8230;");
   }
 
   beforeEach(() => {
@@ -700,7 +733,7 @@ describe("Create Worktree Here path normalization (S6)", () => {
     };
   }
 
-  function getCreateWorktreeItem() {
+  function getCreateWorktreeItem(): ContextMenuItem {
     const items = buildCommitContextMenuItems(
       REPO,
       HASH,
@@ -709,7 +742,7 @@ describe("Create Worktree Here path normalization (S6)", () => {
       {},
       createMockElement()
     );
-    return items.find((item) => item !== null && item.title.includes("Create Worktree Here"))!;
+    return findTopLevelMenuItem(items, "Create Worktree Here&#8230;");
   }
 
   function setupPathAutoUpdateHarness() {
@@ -808,5 +841,118 @@ describe("Create Worktree Here path normalization (S6)", () => {
 
     // Then: the manually edited Path is preserved instead of being overwritten
     expect(mockPathInput.value).toBe("/custom/path");
+  });
+});
+
+describe("Commit context menu structure (S7)", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    (globalThis as Record<string, unknown>).viewState = {
+      dialogDefaults: {
+        merge: { noFastForward: true, squashCommits: false, noCommit: false },
+        cherryPick: { recordOrigin: false, noCommit: false },
+        stashUncommittedChanges: { includeUntracked: false },
+        createWorktree: { openTerminal: true },
+        removeWorktree: { deleteBranch: true }
+      }
+    };
+  });
+
+  it("TC-035: returns the new top-level order for a regular commit", () => {
+    // Case: TC-035
+    // Given: a regular commit with one parent
+    const items = buildCommitContextMenuItems(
+      REPO,
+      HASH,
+      PARENT_HASHES,
+      [],
+      {},
+      createMockElement()
+    );
+
+    // When: the menu array is built
+
+    // Then: the top-level items follow the new layout
+    expect(items).toHaveLength(8);
+    expect(items[0]?.title).toBe("Create Branch&#8230;");
+    expect(items[1]?.title).toBe("Create Worktree Here&#8230;");
+    expect(items[2]?.title).toBe("Cherry Pick&#8230;");
+    expect(items[3]?.title).toBe("Merge into current branch&#8230;");
+    expect(items[4]).toBeNull();
+    expect(items[6]).toBeNull();
+    expect(items[7]?.title).toBe("Copy Commit Hash to Clipboard");
+  });
+
+  it("TC-036: stores Add Tag, Checkout, Revert, and Reset inside the More submenu", () => {
+    // Case: TC-036
+    // Given: a regular commit menu
+    const items = buildCommitContextMenuItems(
+      REPO,
+      HASH,
+      PARENT_HASHES,
+      [],
+      {},
+      createMockElement()
+    );
+
+    // When: the More submenu is inspected
+    const moreItem = getMoreSubmenu(items);
+
+    // Then: submenu items appear in the expected order
+    expect(moreItem.submenu.map((item) => item?.title ?? null)).toEqual([
+      "Add Tag&#8230;",
+      "Checkout&#8230;",
+      "Revert&#8230;",
+      "Reset current branch to this Commit&#8230;"
+    ]);
+  });
+
+  it("TC-037: merge-commit submenu actions preserve their existing dialog paths", () => {
+    // Case: TC-037
+    // Given: a merge commit with two parents
+    const mergeParentHashes = ["parent1234567890", "parent2234567890"];
+    const commits = [
+      { message: "first commit" },
+      { message: "second commit" }
+    ] as unknown as import("../../src/types").GitCommitNode[];
+    const lookup = { parent1234567890: 0, parent2234567890: 1 };
+    const items = buildCommitContextMenuItems(
+      REPO,
+      HASH,
+      mergeParentHashes,
+      commits,
+      lookup,
+      createMockElement()
+    );
+
+    // When: Cherry Pick and Revert are triggered from their new locations
+    findTopLevelMenuItem(items, "Cherry Pick&#8230;").onClick();
+    findSubmenuItem(items, "Revert&#8230;").onClick();
+
+    // Then: merge-specific dialog flows are still used
+    expect(showFormDialog).toHaveBeenCalledTimes(1);
+    expect(showSelectDialog).toHaveBeenCalledTimes(1);
+  });
+
+  it("TC-038: avoids consecutive dividers and nulls at either end", () => {
+    // Case: TC-038
+    // Given: a regular commit menu
+    const items = buildCommitContextMenuItems(
+      REPO,
+      HASH,
+      PARENT_HASHES,
+      [],
+      {},
+      createMockElement()
+    );
+
+    // When: divider placement is scanned
+    const hasInvalidDividers = items.some(
+      (item, index) =>
+        item === null && (index === 0 || index === items.length - 1 || items[index + 1] === null)
+    );
+
+    // Then: there are no leading, trailing, or consecutive dividers
+    expect(hasInvalidDividers).toBe(false);
   });
 });

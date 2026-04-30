@@ -24,8 +24,72 @@ const REPO = "/test/repo";
 const HASH = "abc123";
 const SELECTOR = "stash@{0}";
 
+function isContextMenuItem(item: ContextMenuElement): item is ContextMenuItem {
+  return item !== null && "onClick" in item;
+}
+
+function isContextMenuSubmenu(item: ContextMenuElement): item is ContextMenuSubmenu {
+  return item !== null && "submenu" in item;
+}
+
 function createMockElement(): HTMLElement {
   return document.createElement("div");
+}
+
+function getApplyStashItem(items: ContextMenuElement[]): ContextMenuItem {
+  const item = items[0];
+  if (!isContextMenuItem(item)) {
+    throw new Error("Apply Stash item is missing");
+  }
+  return item;
+}
+
+function getPopStashItem(items: ContextMenuElement[]): ContextMenuItem {
+  const item = items[1];
+  if (!isContextMenuItem(item)) {
+    throw new Error("Pop Stash item is missing");
+  }
+  return item;
+}
+
+function getMoreSubmenu(items: ContextMenuElement[]): ContextMenuSubmenu {
+  const item = items[3];
+  if (!isContextMenuSubmenu(item)) {
+    throw new Error("More submenu is missing");
+  }
+  return item;
+}
+
+function getCreateBranchFromStashItem(items: ContextMenuElement[]): ContextMenuItem {
+  const item = getMoreSubmenu(items).submenu[0];
+  if (!isContextMenuItem(item)) {
+    throw new Error("Create Branch from Stash item is missing");
+  }
+  return item;
+}
+
+function getDropStashItem(items: ContextMenuElement[]): ContextMenuItem {
+  const item = getMoreSubmenu(items).submenu[1];
+  if (!isContextMenuItem(item)) {
+    throw new Error("Drop Stash item is missing");
+  }
+  return item;
+}
+
+function getCopyStashNameItem(items: ContextMenuElement[]): ContextMenuItem {
+  const item = items[5];
+  if (!isContextMenuItem(item)) {
+    throw new Error("Copy Stash Name item is missing");
+  }
+  return item;
+}
+
+function getCopyStashHashItem(items: ContextMenuElement[]): ContextMenuItem {
+  const item = items[6];
+  if (!isContextMenuItem(item)) {
+    throw new Error("Copy Stash Hash item is missing");
+  }
+  return item;
 }
 
 // --- S1: Return array structure ---
@@ -35,18 +99,18 @@ describe("buildStashContextMenuItems return array (S1)", () => {
     vi.clearAllMocks();
   });
 
-  it("TC-001: returns 7-element array with null separator at index 4", () => {
+  it("TC-001: returns 7-element array with More submenu at index 3", () => {
     // Case: TC-001
     // Given: Valid repo, hash, selector and source element
     const items = buildStashContextMenuItems(REPO, HASH, SELECTOR, createMockElement());
 
     // When: Function returns the menu items array
 
-    // Then: Array has 7 elements; index 0-3 non-null, index 4 null, index 5-6 non-null
+    // Then: Array has 7 elements with separators at index 2 and 4
     expect(items).toHaveLength(7);
     expect(items[0]).not.toBeNull();
     expect(items[1]).not.toBeNull();
-    expect(items[2]).not.toBeNull();
+    expect(items[2]).toBeNull();
     expect(items[3]).not.toBeNull();
     expect(items[4]).toBeNull();
     expect(items[5]).not.toBeNull();
@@ -61,12 +125,15 @@ describe("buildStashContextMenuItems return array (S1)", () => {
     // When: Function returns the menu items array
 
     // Then: Each non-null item title matches the expected value
-    expect(items[0]!.title).toBe(`Apply Stash${ELLIPSIS}`);
-    expect(items[1]!.title).toBe(`Create Branch from Stash${ELLIPSIS}`);
-    expect(items[2]!.title).toBe(`Pop Stash${ELLIPSIS}`);
-    expect(items[3]!.title).toBe(`Drop Stash${ELLIPSIS}`);
-    expect(items[5]!.title).toBe("Copy Stash Name to Clipboard");
-    expect(items[6]!.title).toBe("Copy Stash Hash to Clipboard");
+    expect(items[0]?.title).toBe(`Apply Stash${ELLIPSIS}`);
+    expect(items[1]?.title).toBe(`Pop Stash${ELLIPSIS}`);
+    expect(items[3]?.title).toBe("More...");
+    expect(getMoreSubmenu(items).submenu.map((item) => item?.title ?? null)).toEqual([
+      `Create Branch from Stash${ELLIPSIS}`,
+      `Drop Stash${ELLIPSIS}`
+    ]);
+    expect(items[5]?.title).toBe("Copy Stash Name to Clipboard");
+    expect(items[6]?.title).toBe("Copy Stash Hash to Clipboard");
   });
 });
 
@@ -86,7 +153,7 @@ describe("Apply Stash menu item (S2)", () => {
     const items = buildStashContextMenuItems(REPO, HASH, SELECTOR, sourceElem);
 
     // When: Apply Stash onClick is triggered
-    items[0]!.onClick();
+    getApplyStashItem(items).onClick();
 
     // Then: showCheckboxDialog called once with escaped selector in message, correct label/default/action/target
     expect(showCheckboxDialog).toHaveBeenCalledTimes(1);
@@ -103,7 +170,7 @@ describe("Apply Stash menu item (S2)", () => {
     // Case: TC-004
     // Given: Apply Stash dialog shown
     const items = buildStashContextMenuItems(REPO, HASH, SELECTOR, sourceElem);
-    items[0]!.onClick();
+    getApplyStashItem(items).onClick();
     const callback = vi.mocked(showCheckboxDialog).mock.calls[0][4];
 
     // When: Callback invoked with reinstateIndex=true
@@ -123,7 +190,7 @@ describe("Apply Stash menu item (S2)", () => {
     // Case: TC-005
     // Given: Apply Stash dialog shown
     const items = buildStashContextMenuItems(REPO, HASH, SELECTOR, sourceElem);
-    items[0]!.onClick();
+    getApplyStashItem(items).onClick();
     const callback = vi.mocked(showCheckboxDialog).mock.calls[0][4];
 
     // When: Callback invoked with reinstateIndex=false
@@ -156,7 +223,7 @@ describe("Create Branch from Stash menu item (S3)", () => {
     const items = buildStashContextMenuItems(REPO, HASH, SELECTOR, sourceElem);
 
     // When: Create Branch onClick is triggered
-    items[1]!.onClick();
+    getCreateBranchFromStashItem(items).onClick();
 
     // Then: showRefInputDialog called once with escaped selector in message, empty default, correct action/target
     expect(showRefInputDialog).toHaveBeenCalledTimes(1);
@@ -172,7 +239,7 @@ describe("Create Branch from Stash menu item (S3)", () => {
     // Case: TC-007
     // Given: Create Branch dialog shown
     const items = buildStashContextMenuItems(REPO, HASH, SELECTOR, sourceElem);
-    items[1]!.onClick();
+    getCreateBranchFromStashItem(items).onClick();
     const callback = vi.mocked(showRefInputDialog).mock.calls[0][3];
 
     // When: Callback invoked with branch name "feature-branch"
@@ -205,7 +272,7 @@ describe("Pop Stash menu item (S4)", () => {
     const items = buildStashContextMenuItems(REPO, HASH, SELECTOR, sourceElem);
 
     // When: Pop Stash onClick is triggered
-    items[2]!.onClick();
+    getPopStashItem(items).onClick();
 
     // Then: showCheckboxDialog called once with escaped selector and "remove" text in message
     expect(showCheckboxDialog).toHaveBeenCalledTimes(1);
@@ -223,7 +290,7 @@ describe("Pop Stash menu item (S4)", () => {
     // Case: TC-009
     // Given: Pop Stash dialog shown
     const items = buildStashContextMenuItems(REPO, HASH, SELECTOR, sourceElem);
-    items[2]!.onClick();
+    getPopStashItem(items).onClick();
     const callback = vi.mocked(showCheckboxDialog).mock.calls[0][4];
 
     // When: Callback invoked with reinstateIndex=true
@@ -243,7 +310,7 @@ describe("Pop Stash menu item (S4)", () => {
     // Case: TC-010
     // Given: Pop Stash dialog shown
     const items = buildStashContextMenuItems(REPO, HASH, SELECTOR, sourceElem);
-    items[2]!.onClick();
+    getPopStashItem(items).onClick();
     const callback = vi.mocked(showCheckboxDialog).mock.calls[0][4];
 
     // When: Callback invoked with reinstateIndex=false
@@ -276,7 +343,7 @@ describe("Drop Stash menu item (S5)", () => {
     const items = buildStashContextMenuItems(REPO, HASH, SELECTOR, sourceElem);
 
     // When: Drop Stash onClick is triggered
-    items[3]!.onClick();
+    getDropStashItem(items).onClick();
 
     // Then: showConfirmationDialog called once with escaped selector and "cannot be undone" in message
     expect(showConfirmationDialog).toHaveBeenCalledTimes(1);
@@ -291,7 +358,7 @@ describe("Drop Stash menu item (S5)", () => {
     // Case: TC-012
     // Given: Drop Stash confirmation dialog shown
     const items = buildStashContextMenuItems(REPO, HASH, SELECTOR, sourceElem);
-    items[3]!.onClick();
+    getDropStashItem(items).onClick();
     const callback = vi.mocked(showConfirmationDialog).mock.calls[0][1];
 
     // When: Callback invoked (user confirmed)
@@ -320,7 +387,7 @@ describe("Copy to Clipboard menu items (S6)", () => {
     const items = buildStashContextMenuItems(REPO, HASH, SELECTOR, createMockElement());
 
     // When: Copy Stash Name onClick is triggered
-    items[5]!.onClick();
+    getCopyStashNameItem(items).onClick();
 
     // Then: sendMessage called with copyToClipboard command, type "Stash Name", data=selector
     expect(sendMessage).toHaveBeenCalledTimes(1);
@@ -337,7 +404,7 @@ describe("Copy to Clipboard menu items (S6)", () => {
     const items = buildStashContextMenuItems(REPO, HASH, SELECTOR, createMockElement());
 
     // When: Copy Stash Hash onClick is triggered
-    items[6]!.onClick();
+    getCopyStashHashItem(items).onClick();
 
     // Then: sendMessage called with copyToClipboard command, type "Stash Hash", data=hash
     expect(sendMessage).toHaveBeenCalledTimes(1);
@@ -362,7 +429,7 @@ describe("Input boundary values and HTML escape (S7)", () => {
     const items = buildStashContextMenuItems(REPO, HASH, "", createMockElement());
 
     // When: Apply Stash onClick is triggered
-    items[0]!.onClick();
+    getApplyStashItem(items).onClick();
 
     // Then: Dialog message contains empty escape result; callback sends empty selector
     const message = vi.mocked(showCheckboxDialog).mock.calls[0][0];
@@ -378,7 +445,7 @@ describe("Input boundary values and HTML escape (S7)", () => {
     const items = buildStashContextMenuItems("", HASH, SELECTOR, createMockElement());
 
     // When: Apply Stash onClick and callback invoked
-    items[0]!.onClick();
+    getApplyStashItem(items).onClick();
     const callback = vi.mocked(showCheckboxDialog).mock.calls[0][4];
     callback(false);
 
@@ -392,7 +459,7 @@ describe("Input boundary values and HTML escape (S7)", () => {
     const items = buildStashContextMenuItems(REPO, "", SELECTOR, createMockElement());
 
     // When: Copy Hash onClick is triggered
-    items[6]!.onClick();
+    getCopyStashHashItem(items).onClick();
 
     // Then: sendMessage data field is ""
     expect(sendMessage).toHaveBeenCalledWith({
@@ -409,7 +476,7 @@ describe("Input boundary values and HTML escape (S7)", () => {
     const items = buildStashContextMenuItems(REPO, HASH, specialSelector, createMockElement());
 
     // When: Apply Stash onClick is triggered
-    items[0]!.onClick();
+    getApplyStashItem(items).onClick();
 
     // Then: Dialog message contains HTML-escaped selector (no raw special chars)
     const message = vi.mocked(showCheckboxDialog).mock.calls[0][0];
@@ -424,7 +491,7 @@ describe("Input boundary values and HTML escape (S7)", () => {
     const items = buildStashContextMenuItems(REPO, HASH, xssSelector, createMockElement());
 
     // When: Apply Stash onClick is triggered
-    items[0]!.onClick();
+    getApplyStashItem(items).onClick();
 
     // Then: Dialog message has escaped script tag, no raw <script>
     const message = vi.mocked(showCheckboxDialog).mock.calls[0][0];
@@ -439,7 +506,7 @@ describe("Input boundary values and HTML escape (S7)", () => {
     const items = buildStashContextMenuItems(REPO, HASH, stashSelector, createMockElement());
 
     // When: Apply Stash onClick is triggered
-    items[0]!.onClick();
+    getApplyStashItem(items).onClick();
 
     // Then: @ and {} are preserved as-is (not in escapeHtml's escape set)
     const message = vi.mocked(showCheckboxDialog).mock.calls[0][0];
@@ -453,7 +520,7 @@ describe("Input boundary values and HTML escape (S7)", () => {
     const items = buildStashContextMenuItems(REPO, HASH, unicodeSelector, createMockElement());
 
     // When: Apply Stash onClick is triggered
-    items[0]!.onClick();
+    getApplyStashItem(items).onClick();
 
     // Then: Unicode characters are preserved in dialog message
     const message = vi.mocked(showCheckboxDialog).mock.calls[0][0];
@@ -467,7 +534,7 @@ describe("Input boundary values and HTML escape (S7)", () => {
     const items = buildStashContextMenuItems(REPO, HASH, newlineSelector, createMockElement());
 
     // When: Apply Stash onClick is triggered
-    items[0]!.onClick();
+    getApplyStashItem(items).onClick();
 
     // Then: Newline characters are preserved in dialog message
     const message = vi.mocked(showCheckboxDialog).mock.calls[0][0];
@@ -481,7 +548,7 @@ describe("Input boundary values and HTML escape (S7)", () => {
     const items = buildStashContextMenuItems(REPO, HASH, preEncodedSelector, createMockElement());
 
     // When: Apply Stash onClick is triggered
-    items[0]!.onClick();
+    getApplyStashItem(items).onClick();
 
     // Then: The & is re-escaped resulting in &amp;amp;already-encoded
     const message = vi.mocked(showCheckboxDialog).mock.calls[0][0];
@@ -495,7 +562,7 @@ describe("Input boundary values and HTML escape (S7)", () => {
     const items = buildStashContextMenuItems(spacedRepo, HASH, SELECTOR, createMockElement());
 
     // When: Apply Stash onClick and callback invoked
-    items[0]!.onClick();
+    getApplyStashItem(items).onClick();
     const callback = vi.mocked(showCheckboxDialog).mock.calls[0][4];
     callback(false);
 
@@ -512,7 +579,7 @@ describe("Input boundary values and HTML escape (S7)", () => {
     const items = buildStashContextMenuItems(REPO, nonHexHash, SELECTOR, createMockElement());
 
     // When: Copy Hash onClick is triggered
-    items[6]!.onClick();
+    getCopyStashHashItem(items).onClick();
 
     // Then: sendMessage data field contains the non-hex value as-is
     expect(sendMessage).toHaveBeenCalledWith({
@@ -534,7 +601,7 @@ describe("Input boundary values and HTML escape (S7)", () => {
 
     // When: Apply Stash onClick is triggered (escapeHtml(null) called)
     // Then: TypeError thrown because null has no .replace() method
-    expect(() => items[0]!.onClick()).toThrow(TypeError);
+    expect(() => getApplyStashItem(items).onClick()).toThrow(TypeError);
   });
 
   it("TC-027: null hash is passed through to sendMessage data", () => {
@@ -548,7 +615,7 @@ describe("Input boundary values and HTML escape (S7)", () => {
     );
 
     // When: Copy Hash onClick is triggered
-    items[6]!.onClick();
+    getCopyStashHashItem(items).onClick();
 
     // Then: sendMessage data field is null
     expect(sendMessage).toHaveBeenCalledWith({
@@ -565,10 +632,51 @@ describe("Input boundary values and HTML escape (S7)", () => {
     const items = buildStashContextMenuItems(REPO, HASH, longSelector, createMockElement());
 
     // When: Apply Stash onClick is triggered
-    items[0]!.onClick();
+    getApplyStashItem(items).onClick();
 
     // Then: Full string appears in dialog message without truncation
     const message = vi.mocked(showCheckboxDialog).mock.calls[0][0];
     expect(message).toContain(longSelector);
+  });
+});
+
+describe("Stash context menu structure (S8)", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  it("TC-029: returns the new top-level order with More submenu in the middle", () => {
+    // Case: TC-029
+    // Given: a valid stash menu input
+    const items = buildStashContextMenuItems(REPO, HASH, SELECTOR, createMockElement());
+
+    // When: the menu array is built
+
+    // Then: the top-level order matches the reorganization spec
+    expect(items).toHaveLength(7);
+    expect(items[0]?.title).toBe(`Apply Stash${ELLIPSIS}`);
+    expect(items[1]?.title).toBe(`Pop Stash${ELLIPSIS}`);
+    expect(items[2]).toBeNull();
+    expect(items[3]?.title).toBe("More...");
+    expect(items[4]).toBeNull();
+    expect(items[5]?.title).toBe("Copy Stash Name to Clipboard");
+    expect(items[6]?.title).toBe("Copy Stash Hash to Clipboard");
+  });
+
+  it("TC-030: More submenu contains Create Branch from Stash and Drop Stash without dividers", () => {
+    // Case: TC-030
+    // Given: a valid stash menu input
+    const items = buildStashContextMenuItems(REPO, HASH, SELECTOR, createMockElement());
+
+    // When: the More submenu is inspected
+    const submenu = getMoreSubmenu(items).submenu;
+
+    // Then: submenu contains exactly two actionable items and no null dividers
+    expect(submenu).toHaveLength(2);
+    expect(submenu.map((item) => item?.title ?? null)).toEqual([
+      `Create Branch from Stash${ELLIPSIS}`,
+      `Drop Stash${ELLIPSIS}`
+    ]);
+    expect(submenu.includes(null)).toBe(false);
   });
 });

@@ -46,6 +46,57 @@ function createMockElement(classes: string[]): HTMLElement {
 
 const REPO = "/test/repo";
 
+function isContextMenuItem(item: ContextMenuElement): item is ContextMenuItem {
+  return item !== null && "onClick" in item;
+}
+
+function isContextMenuSubmenu(item: ContextMenuElement): item is ContextMenuSubmenu {
+  return item !== null && "submenu" in item;
+}
+
+function flattenMenuItems(menu: ContextMenuElement[]): ContextMenuItem[] {
+  return menu.flatMap((item) => {
+    if (item === null) {
+      return [];
+    }
+
+    if (isContextMenuSubmenu(item)) {
+      return flattenMenuItems(item.submenu);
+    }
+
+    return isContextMenuItem(item) ? [item] : [];
+  });
+}
+
+function getTitles(menu: ContextMenuElement[]): string[] {
+  return flattenMenuItems(menu).map((item) => item.title);
+}
+
+function findMenuItem(menu: ContextMenuElement[], title: string): ContextMenuItem | undefined {
+  return flattenMenuItems(menu).find((item) => item.title === title);
+}
+
+function getTopLevelSubmenu(
+  menu: ContextMenuElement[],
+  title = "More..."
+): ContextMenuSubmenu | undefined {
+  return menu.find(
+    (item): item is ContextMenuSubmenu => isContextMenuSubmenu(item) && item.title === title
+  );
+}
+
+function hasInvalidDividers(menu: ContextMenuElement[]): boolean {
+  if (menu.length === 0) {
+    return false;
+  }
+
+  if (menu[0] === null || menu[menu.length - 1] === null) {
+    return true;
+  }
+
+  return menu.some((item, index) => item === null && menu[index + 1] === null);
+}
+
 describe("checkoutBranchAction branch name suggestion", () => {
   beforeEach(() => {
     vi.clearAllMocks();
@@ -167,9 +218,7 @@ describe("buildRefContextMenuItems Pull/Push menu items", () => {
     const menu = buildRefContextMenuItems(REPO, "main", sourceElem, false, "main");
 
     // Then: Menu contains Pull and Push items
-    const titles = menu
-      .filter((item): item is ContextMenuElement => item !== null)
-      .map((item) => item.title);
+    const titles = getTitles(menu);
     expect(titles).toContain("Pull");
     expect(titles).toContain("Push");
   });
@@ -182,9 +231,8 @@ describe("buildRefContextMenuItems Pull/Push menu items", () => {
     const menu = buildRefContextMenuItems(REPO, "main", sourceElem, false, "main");
 
     // Then: Pull is "Pull" and Push is "Push" (exact titles)
-    const nonNullItems = menu.filter((item): item is ContextMenuElement => item !== null);
-    const pullItem = nonNullItems.find((item) => item.title === "Pull");
-    const pushItem = nonNullItems.find((item) => item.title === "Push");
+    const pullItem = findMenuItem(menu, "Pull");
+    const pushItem = findMenuItem(menu, "Push");
     expect(pullItem).toBeDefined();
     expect(pushItem).toBeDefined();
   });
@@ -197,9 +245,7 @@ describe("buildRefContextMenuItems Pull/Push menu items", () => {
     const menu = buildRefContextMenuItems(REPO, "feature/x", sourceElem, false, "main");
 
     // Then: Menu does not contain Pull or Push items
-    const titles = menu
-      .filter((item): item is ContextMenuElement => item !== null)
-      .map((item) => item.title);
+    const titles = getTitles(menu);
     expect(titles).not.toContain("Pull");
     expect(titles).not.toContain("Push");
   });
@@ -212,9 +258,7 @@ describe("buildRefContextMenuItems Pull/Push menu items", () => {
     const menu = buildRefContextMenuItems(REPO, "origin/main", sourceElem, false, "main");
 
     // Then: Menu does not contain Pull or Push items
-    const titles = menu
-      .filter((item): item is ContextMenuElement => item !== null)
-      .map((item) => item.title);
+    const titles = getTitles(menu);
     expect(titles).not.toContain("Pull");
     expect(titles).not.toContain("Push");
   });
@@ -293,9 +337,7 @@ describe("buildRefContextMenuItems remote branch menu items", () => {
     const menu = buildRefContextMenuItems(REPO, "origin/feature", sourceElem, false, "main");
 
     // Then: Menu contains "Delete Remote Branch..." item
-    const titles = menu
-      .filter((item): item is ContextMenuElement => item !== null)
-      .map((item) => item.title);
+    const titles = getTitles(menu);
     expect(titles).toContain("Delete Remote Branch&#8230;");
   });
 
@@ -307,9 +349,7 @@ describe("buildRefContextMenuItems remote branch menu items", () => {
     const menu = buildRefContextMenuItems(REPO, "origin/feature", sourceElem, false, "main");
 
     // Then: Menu contains "Merge into current branch..." item
-    const titles = menu
-      .filter((item): item is ContextMenuElement => item !== null)
-      .map((item) => item.title);
+    const titles = getTitles(menu);
     expect(titles).toContain("Merge into current branch&#8230;");
   });
 
@@ -321,9 +361,7 @@ describe("buildRefContextMenuItems remote branch menu items", () => {
     const menu = buildRefContextMenuItems(REPO, "feature/x", sourceElem, false, "main");
 
     // Then: Menu does not contain "Delete Remote Branch..." item
-    const titles = menu
-      .filter((item): item is ContextMenuElement => item !== null)
-      .map((item) => item.title);
+    const titles = getTitles(menu);
     expect(titles).not.toContain("Delete Remote Branch&#8230;");
   });
 
@@ -333,9 +371,7 @@ describe("buildRefContextMenuItems remote branch menu items", () => {
     const menu = buildRefContextMenuItems(REPO, "origin/feature", sourceElem, false, "main");
 
     // When: Delete Remote Branch item is clicked
-    const deleteItem = menu
-      .filter((item): item is ContextMenuElement => item !== null)
-      .find((item) => item.title === "Delete Remote Branch&#8230;");
+    const deleteItem = findMenuItem(menu, "Delete Remote Branch&#8230;");
     deleteItem!.onClick();
 
     // Then: showConfirmationDialog is called
@@ -350,9 +386,7 @@ describe("buildRefContextMenuItems remote branch menu items", () => {
     const menu = buildRefContextMenuItems(REPO, "origin/feature", sourceElem, false, "main");
 
     // When: Merge into current branch item is clicked
-    const mergeItem = menu
-      .filter((item): item is ContextMenuElement => item !== null)
-      .find((item) => item.title === "Merge into current branch&#8230;");
+    const mergeItem = findMenuItem(menu, "Merge into current branch&#8230;");
     mergeItem!.onClick();
 
     // Then: showFormDialog is called with 3 checkboxes (No FF, Squash, No Commit)
@@ -380,9 +414,7 @@ describe("buildRefContextMenuItems Rebase menu items", () => {
     const menu = buildRefContextMenuItems(REPO, "feature/x", sourceElem, false, "main");
 
     // Then: Menu contains "Rebase current branch on Branch..." item
-    const titles = menu
-      .filter((item): item is ContextMenuElement => item !== null)
-      .map((item) => item.title);
+    const titles = getTitles(menu);
     expect(titles).toContain("Rebase current branch on Branch&#8230;");
   });
 
@@ -394,9 +426,7 @@ describe("buildRefContextMenuItems Rebase menu items", () => {
     const menu = buildRefContextMenuItems(REPO, "main", sourceElem, false, "main");
 
     // Then: Menu does not contain "Rebase..." item (cannot rebase onto self)
-    const titles = menu
-      .filter((item): item is ContextMenuElement => item !== null)
-      .map((item) => item.title);
+    const titles = getTitles(menu);
     expect(titles).not.toContain("Rebase current branch on Branch&#8230;");
   });
 
@@ -408,9 +438,7 @@ describe("buildRefContextMenuItems Rebase menu items", () => {
     const menu = buildRefContextMenuItems(REPO, "origin/main", sourceElem, false, "main");
 
     // Then: Menu does not contain "Rebase..." item (only for local branches)
-    const titles = menu
-      .filter((item): item is ContextMenuElement => item !== null)
-      .map((item) => item.title);
+    const titles = getTitles(menu);
     expect(titles).not.toContain("Rebase current branch on Branch&#8230;");
   });
 
@@ -420,9 +448,7 @@ describe("buildRefContextMenuItems Rebase menu items", () => {
     const menu = buildRefContextMenuItems(REPO, "feature/x", sourceElem, false, "main");
 
     // When: Rebase item is clicked
-    const rebaseItem = menu
-      .filter((item): item is ContextMenuElement => item !== null)
-      .find((item) => item.title === "Rebase current branch on Branch&#8230;");
+    const rebaseItem = findMenuItem(menu, "Rebase current branch on Branch&#8230;");
     rebaseItem!.onClick();
 
     // Then: showConfirmationDialog is called
@@ -445,9 +471,7 @@ describe("buildRefContextMenuItems Delete Branch dialog extension", () => {
     const menu = buildRefContextMenuItems(REPO, "feature/x", sourceElem, false, "main", ["origin"]);
 
     // When: Delete Branch item is clicked
-    const deleteItem = menu
-      .filter((item): item is ContextMenuElement => item !== null)
-      .find((item) => item.title === "Delete Branch&#8230;");
+    const deleteItem = findMenuItem(menu, "Delete Branch&#8230;");
     deleteItem!.onClick();
 
     // Then: showFormDialog is called with 2 checkbox inputs
@@ -468,9 +492,7 @@ describe("buildRefContextMenuItems Delete Branch dialog extension", () => {
     const menu = buildRefContextMenuItems(REPO, "feature/x", sourceElem, false, "main", []);
 
     // When: Delete Branch item is clicked
-    const deleteItem = menu
-      .filter((item): item is ContextMenuElement => item !== null)
-      .find((item) => item.title === "Delete Branch&#8230;");
+    const deleteItem = findMenuItem(menu, "Delete Branch&#8230;");
     deleteItem!.onClick();
 
     // Then: showCheckboxDialog is used (backward compatible)
@@ -485,9 +507,7 @@ describe("buildRefContextMenuItems Delete Branch dialog extension", () => {
     const menu = buildRefContextMenuItems(REPO, "feature/x", sourceElem, false, "main", remotes);
 
     // When: Delete Branch is clicked and form is submitted with remote delete checked
-    const deleteItem = menu
-      .filter((item): item is ContextMenuElement => item !== null)
-      .find((item) => item.title === "Delete Branch&#8230;");
+    const deleteItem = findMenuItem(menu, "Delete Branch&#8230;");
     deleteItem!.onClick();
     const callback = (showFormDialog as ReturnType<typeof vi.fn>).mock.calls[0][3];
     callback(["checked", "checked"]);
@@ -508,9 +528,7 @@ describe("buildRefContextMenuItems Delete Branch dialog extension", () => {
     const menu = buildRefContextMenuItems(REPO, "feature/x", sourceElem, false, "main", ["origin"]);
 
     // When: Delete Branch is clicked and form is submitted with remote delete unchecked
-    const deleteItem = menu
-      .filter((item): item is ContextMenuElement => item !== null)
-      .find((item) => item.title === "Delete Branch&#8230;");
+    const deleteItem = findMenuItem(menu, "Delete Branch&#8230;");
     deleteItem!.onClick();
     const callback = (showFormDialog as ReturnType<typeof vi.fn>).mock.calls[0][3];
     callback(["unchecked", "unchecked"]);
@@ -542,10 +560,10 @@ describe("buildMergeBranchMenuItem Merge dialog (S7)", () => {
     };
   });
 
-  function getMergeItem(refName = "feature/x") {
+  function getMergeItem(refName = "feature/x"): ContextMenuItem {
     const sourceElem = createMockElement(["head"]);
     const menu = buildRefContextMenuItems(REPO, refName, sourceElem, false, "main");
-    return menu.find((item) => item !== null && item.title === "Merge into current branch&#8230;")!;
+    return findMenuItem(menu, "Merge into current branch&#8230;")!;
   }
 
   it("calls showFormDialog with 3 checkboxes (No FF / Squash / No Commit) (TC-029)", () => {
@@ -646,12 +664,6 @@ describe("buildRefContextMenuItems worktree menu items (S8)", () => {
       }
     };
   });
-
-  function getTitles(menu: ContextMenuElement[]): string[] {
-    return menu
-      .filter((item): item is ContextMenuElement => item !== null)
-      .map((item) => item.title);
-  }
 
   it("includes 'Create Worktree...' for local branch with worktreeInfo=null (TC-033)", () => {
     // Given: A local branch element with no worktree (worktreeInfo is null)
@@ -756,9 +768,7 @@ describe("buildRefContextMenuItems worktree menu items (S8)", () => {
     );
 
     // When: Create Worktree item is clicked
-    const createItem = menu
-      .filter((item): item is ContextMenuElement => item !== null)
-      .find((item) => item.title === "Create Worktree&#8230;");
+    const createItem = findMenuItem(menu, "Create Worktree&#8230;");
     createItem!.onClick();
 
     // Then: showFormDialog is called with Path (text) and Open Terminal (checkbox) fields
@@ -786,9 +796,7 @@ describe("buildRefContextMenuItems worktree menu items (S8)", () => {
     );
 
     // When: Create Worktree item is clicked
-    const createItem = menu
-      .filter((item): item is ContextMenuElement => item !== null)
-      .find((item) => item.title === "Create Worktree&#8230;");
+    const createItem = findMenuItem(menu, "Create Worktree&#8230;");
     createItem!.onClick();
 
     // Then: Path default uses the normalized branch name "../repo-feature-x"
@@ -814,9 +822,7 @@ describe("buildRefContextMenuItems worktree menu items (S8)", () => {
     );
 
     // When: Open Terminal Here item is clicked
-    const openItem = menu
-      .filter((item): item is ContextMenuElement => item !== null)
-      .find((item) => item.title === "Open Terminal Here");
+    const openItem = findMenuItem(menu, "Open Terminal Here");
     openItem!.onClick();
 
     // Then: sendMessage is called with openTerminal command including path and name
@@ -844,9 +850,7 @@ describe("buildRefContextMenuItems worktree menu items (S8)", () => {
     );
 
     // When: Copy Worktree Path item is clicked
-    const copyItem = menu
-      .filter((item): item is ContextMenuElement => item !== null)
-      .find((item) => item.title === "Copy Worktree Path");
+    const copyItem = findMenuItem(menu, "Copy Worktree Path");
     copyItem!.onClick();
 
     // Then: sendMessage is called with copyToClipboard command, type worktreePath
@@ -873,9 +877,7 @@ describe("buildRefContextMenuItems worktree menu items (S8)", () => {
     );
 
     // When: Remove Worktree item is clicked
-    const removeItem = menu
-      .filter((item): item is ContextMenuElement => item !== null)
-      .find((item) => item.title === "Remove Worktree&#8230;");
+    const removeItem = findMenuItem(menu, "Remove Worktree&#8230;");
     removeItem!.onClick();
 
     // Then: showFormDialog is called with message containing branch name and path
@@ -910,9 +912,7 @@ describe("showDeleteBranchDialog worktree warning (S9)", () => {
     );
 
     // When: Delete Branch item is clicked
-    const deleteItem = menu
-      .filter((item): item is ContextMenuElement => item !== null)
-      .find((item) => item.title === "Delete Branch&#8230;");
+    const deleteItem = findMenuItem(menu, "Delete Branch&#8230;");
     deleteItem!.onClick();
 
     // Then: showFormDialog message contains worktree warning with path
@@ -938,9 +938,7 @@ describe("showDeleteBranchDialog worktree warning (S9)", () => {
     );
 
     // When: Delete Branch item is clicked
-    const deleteItem = menu
-      .filter((item): item is ContextMenuElement => item !== null)
-      .find((item) => item.title === "Delete Branch&#8230;");
+    const deleteItem = findMenuItem(menu, "Delete Branch&#8230;");
     deleteItem!.onClick();
 
     // Then: showCheckboxDialog message contains worktree warning with path
@@ -965,9 +963,7 @@ describe("showDeleteBranchDialog worktree warning (S9)", () => {
     );
 
     // When: Delete Branch item is clicked
-    const deleteItem = menu
-      .filter((item): item is ContextMenuElement => item !== null)
-      .find((item) => item.title === "Delete Branch&#8230;");
+    const deleteItem = findMenuItem(menu, "Delete Branch&#8230;");
     deleteItem!.onClick();
 
     // Then: showFormDialog message does NOT contain worktree warning
@@ -983,9 +979,7 @@ describe("showDeleteBranchDialog worktree warning (S9)", () => {
     const menu = buildRefContextMenuItems(REPO, "feature/x", sourceElem, false, "main", []);
 
     // When: Delete Branch item is clicked
-    const deleteItem = menu
-      .filter((item): item is ContextMenuElement => item !== null)
-      .find((item) => item.title === "Delete Branch&#8230;");
+    const deleteItem = findMenuItem(menu, "Delete Branch&#8230;");
     deleteItem!.onClick();
 
     // Then: showCheckboxDialog message does NOT contain worktree warning
@@ -1019,9 +1013,7 @@ describe("Rename Branch dialog worktree warning (S10)", () => {
     );
 
     // When: Rename Branch item is clicked
-    const renameItem = menu
-      .filter((item): item is ContextMenuElement => item !== null)
-      .find((item) => item.title === "Rename Branch&#8230;");
+    const renameItem = findMenuItem(menu, "Rename Branch&#8230;");
     renameItem!.onClick();
 
     // Then: showFormDialog message contains worktree warning with path
@@ -1046,9 +1038,7 @@ describe("Rename Branch dialog worktree warning (S10)", () => {
     );
 
     // When: Rename Branch item is clicked
-    const renameItem = menu
-      .filter((item): item is ContextMenuElement => item !== null)
-      .find((item) => item.title === "Rename Branch&#8230;");
+    const renameItem = findMenuItem(menu, "Rename Branch&#8230;");
     renameItem!.onClick();
 
     // Then: showFormDialog message does NOT contain worktree warning
@@ -1088,9 +1078,7 @@ describe("Create Worktree dialog Open Terminal setting (S11)", () => {
     );
 
     // When: Create Worktree item is clicked
-    const createItem = menu
-      .filter((item): item is ContextMenuElement => item !== null)
-      .find((item) => item.title === "Create Worktree&#8230;");
+    const createItem = findMenuItem(menu, "Create Worktree&#8230;");
     createItem!.onClick();
 
     // Then: Open Terminal checkbox value is true (checked)
@@ -1122,9 +1110,7 @@ describe("Create Worktree dialog Open Terminal setting (S11)", () => {
     );
 
     // When: Create Worktree item is clicked
-    const createItem = menu
-      .filter((item): item is ContextMenuElement => item !== null)
-      .find((item) => item.title === "Create Worktree&#8230;");
+    const createItem = findMenuItem(menu, "Create Worktree&#8230;");
     createItem!.onClick();
 
     // Then: Open Terminal checkbox value is false (unchecked)
@@ -1175,9 +1161,7 @@ describe("Remove Worktree branch deletion dialog (S12)", () => {
       undefined,
       worktreeInfo
     );
-    const removeItem = menu
-      .filter((item): item is ContextMenuElement => item !== null)
-      .find((item) => item.title === "Remove Worktree&#8230;");
+    const removeItem = findMenuItem(menu, "Remove Worktree&#8230;");
     removeItem!.onClick();
     return menu;
   }
@@ -1281,5 +1265,213 @@ describe("Remove Worktree branch deletion dialog (S12)", () => {
     const dialogMessage = vi.mocked(showFormDialog).mock.calls[0][0];
     expect(dialogMessage).toContain("feature/x");
     expect(dialogMessage).toContain(WORKTREE_PATH);
+  });
+});
+
+describe("Ref context menu structure (S13)", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    (globalThis as Record<string, unknown>).viewState = {
+      dialogDefaults: {
+        merge: { noFastForward: true, squashCommits: false, noCommit: false },
+        cherryPick: { recordOrigin: false, noCommit: false },
+        stashUncommittedChanges: { includeUntracked: false },
+        createWorktree: { openTerminal: true },
+        removeWorktree: { deleteBranch: true }
+      }
+    };
+  });
+
+  it("TC-058: keeps the tag menu unchanged", () => {
+    // Case: TC-058
+    // Given: a tag context source
+    const menu = buildRefContextMenuItems(
+      REPO,
+      "v1.0.0",
+      createMockElement(["tag"]),
+      false,
+      "main"
+    );
+
+    // When: the tag menu is built
+
+    // Then: it keeps the original four-element layout
+    expect(menu.map((item) => item?.title ?? null)).toEqual([
+      "Delete Tag&#8230;",
+      "Push Tag&#8230;",
+      null,
+      "Copy Tag Name to Clipboard"
+    ]);
+  });
+
+  it("TC-059: places Delete Remote Branch inside the remote More submenu", () => {
+    // Case: TC-059
+    // Given: a remote branch context source
+    const menu = buildRefContextMenuItems(
+      REPO,
+      "origin/feature",
+      createMockElement(["remote"]),
+      false,
+      "main"
+    );
+
+    // When: the top-level remote menu is inspected
+    const moreItem = getTopLevelSubmenu(menu);
+
+    // Then: top-level items and submenu contents match the new layout
+    expect(menu.map((item) => item?.title ?? null)).toEqual([
+      "Checkout Branch&#8230;",
+      "Merge into current branch&#8230;",
+      null,
+      "More...",
+      null,
+      "Copy Branch Name to Clipboard"
+    ]);
+    expect(moreItem?.submenu.map((item) => item?.title ?? null)).toEqual([
+      "Delete Remote Branch&#8230;"
+    ]);
+  });
+
+  it("TC-060: moves Rename Branch for HEAD branches into More when no worktree exists", () => {
+    // Case: TC-060
+    // Given: the current branch without worktree info
+    const menu = buildRefContextMenuItems(
+      REPO,
+      "main",
+      createMockElement(["head"]),
+      false,
+      "main",
+      undefined,
+      null
+    );
+
+    // When: the HEAD branch menu is built
+    const moreItem = getTopLevelSubmenu(menu);
+
+    // Then: Pull/Push stay top-level and Rename is only in More
+    expect(menu.map((item) => item?.title ?? null)).toEqual([
+      "Pull",
+      "Push",
+      null,
+      "More...",
+      null,
+      "Copy Branch Name to Clipboard"
+    ]);
+    expect(moreItem?.submenu.map((item) => item?.title ?? null)).toEqual(["Rename Branch&#8230;"]);
+  });
+
+  it("TC-061: omits Remove Worktree from HEAD branch worktree menus", () => {
+    // Case: TC-061
+    // Given: the current branch with main worktree info
+    const menu = buildRefContextMenuItems(
+      REPO,
+      "main",
+      createMockElement(["head"]),
+      false,
+      "main",
+      undefined,
+      { path: "/tmp/main-worktree", isMainWorktree: true }
+    );
+
+    // When: titles are flattened
+    const titles = getTitles(menu);
+
+    // Then: worktree actions are present but Remove Worktree is absent
+    expect(titles).toContain("Open in New Window");
+    expect(titles).toContain("Reveal in File Manager");
+    expect(titles).toContain("Open Terminal Here");
+    expect(titles).toContain("Copy Worktree Path");
+    expect(titles).not.toContain("Remove Worktree&#8230;");
+  });
+
+  it("TC-062: uses Create Worktree before More for non-HEAD local branches without worktrees", () => {
+    // Case: TC-062
+    // Given: a non-HEAD local branch without worktree info
+    const menu = buildRefContextMenuItems(
+      REPO,
+      "feature/x",
+      createMockElement(["head"]),
+      false,
+      "main",
+      [],
+      null
+    );
+
+    // When: the top-level layout is inspected
+
+    // Then: Create Worktree appears before More and Delete Branch is no longer top-level
+    expect(menu.map((item) => item?.title ?? null)).toEqual([
+      "Checkout Branch",
+      "Merge into current branch&#8230;",
+      "Rebase current branch on Branch&#8230;",
+      null,
+      "Create Worktree&#8230;",
+      null,
+      "More...",
+      null,
+      "Copy Branch Name to Clipboard"
+    ]);
+    expect(findMenuItem(menu, "Delete Branch&#8230;")).toBeDefined();
+  });
+
+  it("TC-063: includes Rename, Delete, and Remove Worktree in More for non-main worktrees", () => {
+    // Case: TC-063
+    // Given: a non-HEAD local branch with a non-main worktree
+    const menu = buildRefContextMenuItems(
+      REPO,
+      "feature/x",
+      createMockElement(["head"]),
+      false,
+      "main",
+      ["origin"],
+      { path: "/tmp/feature-worktree", isMainWorktree: false }
+    );
+
+    // When: the More submenu is inspected
+    const moreItem = getTopLevelSubmenu(menu);
+
+    // Then: all destructive/secondary actions are grouped inside More
+    expect(moreItem?.submenu.map((item) => item?.title ?? null)).toEqual([
+      "Rename Branch&#8230;",
+      "Delete Branch&#8230;",
+      "Remove Worktree&#8230;"
+    ]);
+  });
+
+  it("TC-064: avoids invalid divider placement across reorganized menu variants", () => {
+    // Case: TC-064
+    // Given: representative remote, HEAD, and non-HEAD menus
+    const remoteMenu = buildRefContextMenuItems(
+      REPO,
+      "origin/feature",
+      createMockElement(["remote"]),
+      false,
+      "main"
+    );
+    const headMenu = buildRefContextMenuItems(
+      REPO,
+      "main",
+      createMockElement(["head"]),
+      false,
+      "main",
+      undefined,
+      { path: "/tmp/main-worktree", isMainWorktree: true }
+    );
+    const localMenu = buildRefContextMenuItems(
+      REPO,
+      "feature/x",
+      createMockElement(["head"]),
+      false,
+      "main",
+      ["origin"],
+      { path: "/tmp/feature-worktree", isMainWorktree: false }
+    );
+
+    // When: divider rules are validated
+
+    // Then: none of the menus contain leading, trailing, or consecutive dividers
+    expect(hasInvalidDividers(remoteMenu)).toBe(false);
+    expect(hasInvalidDividers(headMenu)).toBe(false);
+    expect(hasInvalidDividers(localMenu)).toBe(false);
   });
 });
