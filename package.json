@@ -209,7 +209,7 @@
         "git-keizu.showUncommittedChanges": {
           "type": "boolean",
           "default": true,
-          "description": "Show uncommitted changes (set to false to decrease load time on large repositories)."
+          "description": "Show the uncommitted changes row in the graph. When set to false, Git Keizu skips reading uncommitted status during graph loads."
         },
         "git-keizu.tabIconColourTheme": {
           "type": "string",

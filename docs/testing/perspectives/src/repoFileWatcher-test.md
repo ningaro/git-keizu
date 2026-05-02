@@ -1,7 +1,7 @@
 # テスト観点表: src/repoFileWatcher.ts
 
 > Source: `src/repoFileWatcher.ts`
-> Generated: 2026-03-22T13:23:24Z
+> Generated: 2026-05-02T01:46:44Z
 > Language: TypeScript
 > Test Framework: Vitest
 
@@ -143,3 +143,29 @@ fileChangeRegex は3パターンのOR:
 | TC-029  | 500ms以内に3回連続でマッチするURIの変更 | Normal - standard                                                          | clearTimeoutが2回呼ばれる。750ms後に最後の1回分のrepoChangeCallbackのみ実行される   | L53-54でデバウンス |
 | TC-030  | refreshTimeout=null (初回)              | Normal - standard                                                          | clearTimeoutが呼ばれない。setTimeoutのみ呼ばれる                                    | L53 false分岐      |
 | TC-031  | refreshTimeout=既存タイムアウトあり     | Normal - standard                                                          | clearTimeout(既存ID)が1回呼ばれた後、新しいsetTimeoutが設定される                   | L53 true → L54     |
+
+## S9: Git 管理ディレクトリ限定監視と複数 watch root
+
+> Origin: Feature 033 (watch-refresh-scope) Task 2
+> Added: 2026-05-02T01:46:44Z
+> Status: active
+> Supersedes: S2, S3, S6, S7, S8
+> Signature: `public start(watchRoots: string[]): void`
+> Target Path: `src/repoFileWatcher.ts`
+
+| Case ID | Input / Precondition                                                              | Perspective (Normal / Validation / Exception / External / Boundary / Type) | Expected Result                                                                                                      | Notes                             |
+| ------- | --------------------------------------------------------------------------------- | -------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------- | --------------------------------- |
+| TC-032  | watchRoots=[`/path/to/main/.git/worktrees/feature-x`, `/path/to/main/.git`]       | Normal - multi-root start                                                  | `createFileSystemWatcher` が2回呼ばれ、両 watcher に `onDidCreate` / `onDidChange` / `onDidDelete` が各1回登録される | linked worktree                   |
+| TC-033  | 既存 watcher 起動後に別の watchRoots で `start()` を再実行                        | Normal - restart                                                           | 旧 watcher の `dispose()` が1回呼ばれた後、新しい root 群で watcher が再作成される                                   | 再起動                            |
+| TC-034  | 複数 root で起動済み                                                              | Normal - stop all                                                          | `stop()` で各 watcher の `dispose()` が1回ずつ呼ばれる                                                               | 全破棄                            |
+| TC-035  | watchRoot=`/path/to/repo/.git`, 変更パス=`src/index.ts`                           | Validation - non-git working tree path                                     | `repoChangeCallback` が呼ばれない                                                                                    | working tree 変更は無視           |
+| TC-036  | watchRoot=`/path/to/repo/.git`, 変更パス=`.gitignore`                             | Validation - ignored dotfile                                               | `repoChangeCallback` が呼ばれない                                                                                    | dotfile は監視対象外              |
+| TC-037  | watchRoot=`/path/to/repo/.git`, 変更パス=`HEAD`                                   | Normal - head update                                                       | 750ms 後に `repoChangeCallback` が1回呼ばれる                                                                        | Git 管理ファイル                  |
+| TC-038  | watchRoot=`/path/to/repo/.git`, 変更パス=`packed-refs`                            | Normal - packed refs                                                       | 750ms 後に `repoChangeCallback` が1回呼ばれる                                                                        | packed refs 更新                  |
+| TC-039  | watchRoot=`/path/to/repo/.git`, 変更パス=`refs/remotes/origin/main`               | Normal - remote ref                                                        | 750ms 後に `repoChangeCallback` が1回呼ばれる                                                                        | remote-tracking ref               |
+| TC-040  | watchRoot=`/path/to/repo/.git`, 変更パス=`refs/heads/`                            | Boundary - empty ref suffix                                                | `repoChangeCallback` が呼ばれない                                                                                    | `refs/heads/*` は空名を許可しない |
+| TC-041  | muted=true, 変更パス=`HEAD`                                                       | Validation - muted                                                         | `repoChangeCallback` が呼ばれない                                                                                    | mute 維持                         |
+| TC-042  | `unmute()` 直後、現在時刻 < `resumeAt`, 変更パス=`HEAD`                           | Boundary - grace period                                                    | `repoChangeCallback` が呼ばれない                                                                                    | 1500ms 猶予維持                   |
+| TC-043  | watchRoots=[linked git-dir, common-dir], common-dir で `refs/heads/main` が変化   | Normal - second watch root                                                 | 共通 root 側イベントでも 750ms 後に `repoChangeCallback` が1回呼ばれる                                               | shared refs                       |
+| TC-044  | 複数 root から 750ms 以内に `HEAD` と `refs/remotes/origin/main` の変更が連続到達 | Normal - cross-root debounce                                               | `clearTimeout` が1回呼ばれ、750ms 後の `repoChangeCallback` は合計1回だけ実行される                                  | デバウンス維持                    |
+| TC-045  | watchRoots=[linked git-dir], common-dir 配下の `refs/heads/main` を誤って渡す     | Validation - outside configured roots                                      | `repoChangeCallback` が呼ばれない                                                                                    | root 外イベントを拒否             |
