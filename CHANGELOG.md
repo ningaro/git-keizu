@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.5.23] - 2026-05-02
+
+### Changed
+
+- **File watcher scoped to `.git` state files**: The background watcher that detects repository changes now monitors only the files that actually reflect Git state — `HEAD`, `index`, `config`, `packed-refs`, and `refs/*` — instead of watching every file in the repository. This eliminates spurious graph refreshes triggered by build artifacts, test outputs, and other working-tree changes, noticeably reducing visual noise in large repositories. Linked worktrees are also handled correctly: both the worktree's own `.git` directory and the shared common git directory are watched, so commits or branch changes in any linked worktree are still reflected in the graph immediately.
+
 ## [0.5.22] - 2026-04-30
 
 ### Changed
@@ -321,7 +327,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 Initial release as Git Keizu — forked from [neo-git-graph](https://github.com/asispts/neo-git-graph) (originally [Git Graph](https://github.com/mhutchie/vscode-git-graph) by mhutchie, MIT).
 
-[Unreleased]: https://github.com/numlia/git-keizu/compare/v0.5.22...HEAD
+[Unreleased]: https://github.com/numlia/git-keizu/compare/v0.5.23...HEAD
+[0.5.23]: https://github.com/numlia/git-keizu/compare/v0.5.22...v0.5.23
 [0.5.22]: https://github.com/numlia/git-keizu/compare/v0.5.21...v0.5.22
 [0.5.21]: https://github.com/numlia/git-keizu/compare/v0.5.20...v0.5.21
 [0.5.20]: https://github.com/numlia/git-keizu/compare/v0.5.19...v0.5.20
