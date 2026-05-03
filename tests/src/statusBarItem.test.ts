@@ -22,6 +22,10 @@ vi.mock("../../src/config", () => ({
   getConfig: vi.fn()
 }));
 
+vi.mock("../../src/i18n", () => ({
+  t: vi.fn((message: string) => message)
+}));
+
 vi.mock("vscode", () => ({
   StatusBarAlignment: {
     Left: "left"

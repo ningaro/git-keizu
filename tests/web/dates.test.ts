@@ -25,7 +25,15 @@ function setDateFormat(format: string | undefined): void {
   (globalThis as Record<string, unknown>).viewState = { dateFormat: format };
 }
 
+function setLocale(locale: "en" | "ja"): void {
+  globalThis.webviewLocale = locale;
+}
+
 describe("getCommitDate", () => {
+  beforeEach(() => {
+    setLocale("en");
+  });
+
   describe("S1: dateFormat switch branches", () => {
     const DATE_VAL = 1_700_000_000;
 
@@ -201,11 +209,11 @@ describe("getCommitDate", () => {
       // When: getCommitDate is called with NaN
       const result = getCommitDate(NaN);
 
-      // Then: value and title contain "NaN" and "undefined" (months[NaN])
+      // Then: value and title contain "NaN" and the missing month key fallback
       expect(result.value).toContain("NaN");
-      expect(result.value).toContain("undefined");
+      expect(result.value).toContain("date.month.short.NaN");
       expect(result.title).toContain("NaN");
-      expect(result.title).toContain("undefined");
+      expect(result.title).toContain("date.month.short.NaN");
     });
 
     it("TC-012: handles Infinity dateVal (Invalid Date)", () => {
@@ -484,6 +492,61 @@ describe("getCommitDate", () => {
 
       // Then: value = "2 seconds ago" (2 !== 1 is true -> "s" suffix appended)
       expect(result.value).toBe("2 seconds ago");
+    });
+  });
+
+  describe("S8: Japanese locale formatting", () => {
+    const DATE_VAL = 1_700_000_000;
+
+    beforeEach(() => {
+      setLocale("ja");
+      globalThis.webviewMessages = {
+        ...globalThis.webviewMessages,
+        "date.relative.minute.one": "{0}分前",
+        "date.relative.minute.other": "{0}分前"
+      };
+    });
+
+    it('TC-032: returns YYYY-MM-DD HH:mm for "Date & Time"', () => {
+      // Case: TC-032
+      // Given: locale = ja and dateFormat = "Date & Time"
+      setDateFormat("Date & Time");
+
+      // When: getCommitDate is called
+      const result = getCommitDate(DATE_VAL);
+
+      // Then: value and title use ISO-style date-time format
+      expect(result.value).toMatch(/^\d{4}-\d{2}-\d{2} \d{2}:\d{2}$/);
+      expect(result.title).toBe(result.value);
+    });
+
+    it('TC-033: returns YYYY-MM-DD for "Date Only"', () => {
+      // Case: TC-033
+      // Given: locale = ja and dateFormat = "Date Only"
+      setDateFormat("Date Only");
+
+      // When: getCommitDate is called
+      const result = getCommitDate(DATE_VAL);
+
+      // Then: value uses ISO-style date format and title still includes time
+      expect(result.value).toMatch(/^\d{4}-\d{2}-\d{2}$/);
+      expect(result.title).toMatch(/^\d{4}-\d{2}-\d{2} \d{2}:\d{2}$/);
+    });
+
+    it('TC-034: returns Japanese relative time for "Relative"', () => {
+      // Case: TC-034
+      // Given: locale = ja and diff = 5 minutes
+      vi.useFakeTimers();
+      vi.setSystemTime(MOCK_NOW_MS);
+      setDateFormat("Relative");
+
+      // When: getCommitDate is called
+      const result = getCommitDate(MOCK_NOW_SEC - 300);
+
+      // Then: value is localized
+      expect(result.value).toBe("5分前");
+
+      vi.useRealTimers();
     });
   });
 });

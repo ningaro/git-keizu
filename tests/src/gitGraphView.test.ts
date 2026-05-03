@@ -104,6 +104,16 @@ vi.mock("../../src/config", () => ({
   }))
 }));
 
+vi.mock("../../src/i18n", () => ({
+  getLocale: vi.fn(() => "en"),
+  loadWebviewMessages: vi.fn(async () => ({ "toolbar.showAll": "Show All" })),
+  t: vi.fn((message: string, ...args: unknown[]) =>
+    args.length === 0
+      ? message
+      : message.replace(/\{(\d+)\}/g, (_match, index) => String(args[Number(index)] ?? ""))
+  )
+}));
+
 vi.mock("../../src/repoFileWatcher", () => {
   function MockRepoFileWatcher() {
     return {
