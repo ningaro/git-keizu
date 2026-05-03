@@ -19,6 +19,7 @@ Git Keizu is a VS Code extension composed of two independent TypeScript projects
 git-keizu/
 ├── .github/              # CI/CD workflows, Dependabot config
 ├── .vscode/              # VS Code debug & task settings
+├── l10n/                 # Host and webview localization bundles
 ├── media/                # Webview CSS stylesheets
 ├── notes/                # Design notes, plans, audit records
 ├── out/                  # Build output (gitignored)
@@ -46,6 +47,7 @@ src/
 ├── config.ts             # VS Code settings wrapper
 ├── dataSource.ts         # Git CLI wrapper (spawn-based)
 ├── gitGraphView.ts       # Webview panel management & message routing
+├── i18n.ts               # Host l10n wrapper and webview dictionary loader
 ├── repoManager.ts        # Repository auto-discovery & watching
 ├── avatarManager.ts      # GitHub/GitLab/Gravatar avatar fetching
 ├── extensionState.ts     # State persistence (node:fs/promises)
@@ -74,6 +76,7 @@ web/
 ├── dropdown.ts           # Dropdown component
 ├── dialogs.ts            # Dialog UI (confirmation, form, error)
 ├── fileTree.ts           # File tree rendering
+├── i18n.ts               # Webview localization helper
 ├── contextMenu.ts        # Right-click context menu
 ├── dates.ts              # Date formatting
 ├── branchLabels.ts       # Branch/tag label rendering
@@ -87,6 +90,14 @@ web/
 - **Runtime**: Browser (VS Code Webview / Chromium)
 - **Build output**: `out/web.min.js` (IIFE, minified)
 - **External dependencies**: None (everything is bundled)
+
+## Localization
+
+Git Keizu uses three localization layers:
+
+- `package.nls*.json` localizes the extension manifest commands and settings.
+- `l10n/bundle.l10n*.json` is consumed through `vscode.l10n.t` in the extension host.
+- `l10n/web/web.l10n.*.json` is loaded by the extension host and injected into the webview for browser-side `t()` calls.
 
 ## tests/ Directory
 

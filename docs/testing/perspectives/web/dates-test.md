@@ -126,3 +126,18 @@
 | ------- | -------------------- | -------------------------------------------------------------------------- | ------------------------------------------------------------- | ----- |
 | TC-030  | Relative, diff=1秒   | Boundary - singular                                                        | value = "1 second ago"。Math.round(1)=1, 1!==1はfalse→"s"なし | L45   |
 | TC-031  | Relative, diff=2秒   | Boundary - plural                                                          | value = "2 seconds ago"。Math.round(2)=2, 2!==1はtrue→"s"あり | L45   |
+
+## S8: locale 分岐 - 日本語日付表示
+
+> Origin: Feature 035 (japanese-ui-i18n) Task 8
+> Added: 2026-05-03
+> Status: active
+> Supersedes: -
+> Signature: `export function getCommitDate(dateVal: number): { title: string; value: string }`
+> Target Path: `web/dates.ts`
+
+| Case ID | Input / Precondition                         | Perspective (Normal / Validation / Exception / External / Boundary / Type) | Expected Result                                    | Notes                |
+| ------- | -------------------------------------------- | -------------------------------------------------------------------------- | -------------------------------------------------- | -------------------- |
+| TC-032  | locale=`ja`, dateFormat=`Date & Time`        | Normal - locale branch                                                     | value/title が `YYYY-MM-DD HH:mm` 形式             | en 保存値は維持      |
+| TC-033  | locale=`ja`, dateFormat=`Date Only`          | Normal - locale branch                                                     | value が `YYYY-MM-DD`、title は `YYYY-MM-DD HH:mm` | title も locale 追従 |
+| TC-034  | locale=`ja`, dateFormat=`Relative`, diff=5分 | Normal - locale branch                                                     | value が `5分前`                                   | 相対時刻の日本語表示 |
