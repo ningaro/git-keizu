@@ -1,4 +1,5 @@
 import { recordRecentAction } from "./contextMenu";
+import { t } from "./i18n";
 import { sendMessage } from "./utils";
 
 /** CSS selector for file row elements in both tree and list views. */
@@ -8,7 +9,7 @@ const GIT_FILE_SELECTOR = ".gitFile";
 const DATASET_NEW_FILE_PATH_KEY = "newfilepath";
 
 /** Label for the Open File context menu item. */
-const OPEN_FILE_LABEL = "Open File";
+const OPEN_FILE_LABEL = t("context.openFile");
 
 /**
  * Resolve the closest `.gitFile` ancestor from a DOM target.

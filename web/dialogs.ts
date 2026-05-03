@@ -1,3 +1,4 @@
+import { t } from "./i18n";
 import { escapeHtml, refInvalid, svgIcons } from "./utils";
 
 const dialog = document.getElementById("dialog")!;
@@ -20,8 +21,8 @@ export function showConfirmationDialog(
 ) {
   showDialog(
     message,
-    "Yes",
-    "No",
+    t("dialog.yes"),
+    t("dialog.no"),
     () => {
       hideDialog();
       confirmed();
@@ -121,7 +122,7 @@ export function showFormDialog(
   showDialog(
     html,
     actionName,
-    "Cancel",
+    t("dialog.cancel"),
     () => {
       if (!isDialogSubmittable()) return;
       let values = [];
@@ -159,7 +160,7 @@ export function showFormDialog(
       if (dialog.className !== newClassName) {
         dialog.className = newClassName;
         dialogActionBtn.title = invalidInput
-          ? `Unable to ${actionName}, one or more invalid characters entered.`
+          ? t("dialog.validation.invalidCharacters", actionName)
           : "";
       }
     });
@@ -195,21 +196,11 @@ export function showErrorDialog(
   sourceElem: HTMLElement | null
 ) {
   showDialog(
-    `${svgIcons.alert}Error: ${message}${reason !== null ? `<br><span class="errorReason">${escapeHtml(reason).split("\n").join("<br>")}</span>` : ""}`,
+    `${svgIcons.alert}${t("dialog.error")} ${message}${reason !== null ? `<br><span class="errorReason">${escapeHtml(reason).split("\n").join("<br>")}</span>` : ""}`,
     null,
-    "Dismiss",
+    t("dialog.dismiss"),
     null,
     sourceElem
-  );
-}
-
-export function showActionRunningDialog(command: string) {
-  showDialog(
-    `<span id="actionRunning">${svgIcons.loading}${command} ...</span>`,
-    null,
-    "Dismiss",
-    null,
-    null
   );
 }
 

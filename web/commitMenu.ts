@@ -1,6 +1,7 @@
 import type { GitCommitNode, GitResetMode } from "../src/types";
 import { recordRecentAction } from "./contextMenu";
 import { showConfirmationDialog, showFormDialog, showSelectDialog } from "./dialogs";
+import { t } from "./i18n";
 import {
   abbrevCommit,
   ELLIPSIS,
@@ -18,30 +19,30 @@ export function buildCommitContextMenuItems(
   sourceElem: HTMLElement
 ): ContextMenuElement[] {
   const addTagItem: ContextMenuItem = {
-    title: `Add Tag${ELLIPSIS}`,
+    title: `${t("Add Tag")}${ELLIPSIS}`,
     recentActionId: "commit.addTag",
     onClick: () => {
       showFormDialog(
-        `Add tag to commit <b><i>${abbrevCommit(hash)}</i></b>:`,
+        t("Add tag to commit {0}:", `<b><i>${abbrevCommit(hash)}</i></b>`),
         [
-          { type: "text-ref" as const, name: "Name: ", default: "" },
+          { type: "text-ref" as const, name: t("Name: "), default: "" },
           {
             type: "select" as const,
-            name: "Type: ",
+            name: t("Type: "),
             default: "annotated",
             options: [
-              { name: "Annotated", value: "annotated" },
-              { name: "Lightweight", value: "lightweight" }
+              { name: t("Annotated"), value: "annotated" },
+              { name: t("Lightweight"), value: "lightweight" }
             ]
           },
           {
             type: "text" as const,
-            name: "Message: ",
+            name: t("Message: "),
             default: "",
-            placeholder: "Optional"
+            placeholder: t("Optional")
           }
         ],
-        "Add Tag",
+        t("Add Tag"),
         (values) => {
           recordRecentAction(repo, "commit.addTag");
           sendMessage({
@@ -58,16 +59,19 @@ export function buildCommitContextMenuItems(
     }
   };
   const createBranchItem: ContextMenuItem = {
-    title: `Create Branch${ELLIPSIS}`,
+    title: `${t("Create Branch")}${ELLIPSIS}`,
     recentActionId: "commit.createBranch",
     onClick: () => {
       showFormDialog(
-        `Enter the name of the branch you would like to create from commit <b><i>${abbrevCommit(hash)}</i></b>:`,
+        t(
+          "Enter the name of the branch you would like to create from commit {0}:",
+          `<b><i>${abbrevCommit(hash)}</i></b>`
+        ),
         [
-          { type: "text-ref" as const, name: "Name: ", default: "" },
-          { type: "checkbox" as const, name: "Check out", value: true }
+          { type: "text-ref" as const, name: t("Name: "), default: "" },
+          { type: "checkbox" as const, name: t("Check out"), value: true }
         ],
-        "Create Branch",
+        t("Create Branch"),
         (values) => {
           recordRecentAction(repo, "commit.createBranch");
           sendMessage({
@@ -83,23 +87,23 @@ export function buildCommitContextMenuItems(
     }
   };
   const createWorktreeItem: ContextMenuItem = {
-    title: `Create Worktree Here${ELLIPSIS}`,
+    title: `${t("Create Worktree Here")}${ELLIPSIS}`,
     recentActionId: "commit.createWorktree",
     onClick: () => {
       const repoName = getRepoName(repo);
       const pathPrefix = `../${repoName}-`;
       showFormDialog(
-        `Create worktree at commit <b><i>${abbrevCommit(hash)}</i></b>:`,
+        t("Create worktree at commit {0}:", `<b><i>${abbrevCommit(hash)}</i></b>`),
         [
-          { type: "text-ref" as const, name: "Branch Name: ", default: "" },
-          { type: "text" as const, name: "Path: ", default: pathPrefix, placeholder: null },
+          { type: "text-ref" as const, name: t("Branch Name: "), default: "" },
+          { type: "text" as const, name: t("Path: "), default: pathPrefix, placeholder: null },
           {
             type: "checkbox" as const,
-            name: "Open Terminal",
+            name: t("Open Terminal"),
             value: viewState.dialogDefaults.createWorktree.openTerminal
           }
         ],
-        "Create Worktree",
+        t("Create Worktree"),
         (values) => {
           recordRecentAction(repo, "commit.createWorktree");
           sendMessage({
@@ -129,10 +133,13 @@ export function buildCommitContextMenuItems(
     }
   };
   const checkoutItem: ContextMenuItem = {
-    title: `Checkout${ELLIPSIS}`,
+    title: `${t("Checkout")}${ELLIPSIS}`,
     onClick: () => {
       showConfirmationDialog(
-        `Are you sure you want to checkout commit <b><i>${abbrevCommit(hash)}</i></b>? This will result in a 'detached HEAD' state.`,
+        t(
+          "Are you sure you want to checkout commit {0}? This will result in a 'detached HEAD' state.",
+          `<b><i>${abbrevCommit(hash)}</i></b>`
+        ),
         () => {
           sendMessage({
             command: "checkoutCommit",
@@ -145,28 +152,35 @@ export function buildCommitContextMenuItems(
     }
   };
   const cherryPickItem: ContextMenuItem = {
-    title: `Cherry Pick${ELLIPSIS}`,
+    title: `${t("Cherry Pick")}${ELLIPSIS}`,
     recentActionId: "commit.cherryPick",
     onClick: () => {
       const cherryPickCheckboxes: DialogCheckboxInput[] = [
         {
           type: "checkbox",
-          name: "Record Origin",
+          name: t("Record Origin"),
           value: viewState.dialogDefaults.cherryPick.recordOrigin,
-          info: "Record that this commit was the origin of the cherry pick by appending a line to the original commit message that indicates where it was cherry picked from."
+          info: t(
+            "Record that this commit was the origin of the cherry pick by appending a line to the original commit message that indicates where it was cherry picked from."
+          )
         },
         {
           type: "checkbox",
-          name: "No Commit",
+          name: t("No Commit"),
           value: viewState.dialogDefaults.cherryPick.noCommit,
-          info: "Cherry picked changes will be staged but not committed, so that you can review and/or modify the result before committing."
+          info: t(
+            "Cherry picked changes will be staged but not committed, so that you can review and/or modify the result before committing."
+          )
         }
       ];
       if (parentHashes.length === 1) {
         showFormDialog(
-          `Are you sure you want to cherry pick commit <b><i>${abbrevCommit(hash)}</i></b>?`,
+          t(
+            "Are you sure you want to cherry pick commit {0}?",
+            `<b><i>${abbrevCommit(hash)}</i></b>`
+          ),
           cherryPickCheckboxes,
-          "Yes, cherry pick commit",
+          t("Yes, cherry pick commit"),
           (values) => {
             recordRecentAction(repo, "commit.cherryPick");
             sendMessage({
@@ -190,17 +204,20 @@ export function buildCommitContextMenuItems(
           value: (index + 1).toString()
         }));
         showFormDialog(
-          `Are you sure you want to cherry pick merge commit <b><i>${abbrevCommit(hash)}</i></b>? Choose the parent hash on the main branch, to cherry pick the commit relative to:`,
+          t(
+            "Are you sure you want to cherry pick merge commit {0}? Choose the parent hash on the main branch, to cherry pick the commit relative to:",
+            `<b><i>${abbrevCommit(hash)}</i></b>`
+          ),
           [
             {
               type: "select" as const,
-              name: "Parent: ",
+              name: t("Parent: "),
               options: options,
               default: "1"
             },
             ...cherryPickCheckboxes
           ],
-          "Yes, cherry pick commit",
+          t("Yes, cherry pick commit"),
           (values) => {
             recordRecentAction(repo, "commit.cherryPick");
             sendMessage({
@@ -218,11 +235,11 @@ export function buildCommitContextMenuItems(
     }
   };
   const revertItem: ContextMenuItem = {
-    title: `Revert${ELLIPSIS}`,
+    title: `${t("Revert")}${ELLIPSIS}`,
     onClick: () => {
       if (parentHashes.length === 1) {
         showConfirmationDialog(
-          `Are you sure you want to revert commit <b><i>${abbrevCommit(hash)}</i></b>?`,
+          t("Are you sure you want to revert commit {0}?", `<b><i>${abbrevCommit(hash)}</i></b>`),
           () => {
             sendMessage({
               command: "revertCommit",
@@ -243,10 +260,13 @@ export function buildCommitContextMenuItems(
           value: (index + 1).toString()
         }));
         showSelectDialog(
-          `Are you sure you want to revert merge commit <b><i>${abbrevCommit(hash)}</i></b>? Choose the parent hash on the main branch, to revert the commit relative to:`,
+          t(
+            "Are you sure you want to revert merge commit {0}? Choose the parent hash on the main branch, to revert the commit relative to:",
+            `<b><i>${abbrevCommit(hash)}</i></b>`
+          ),
           "1",
           options,
-          "Yes, revert commit",
+          t("Yes, revert commit"),
           (parentIndex) => {
             sendMessage({
               command: "revertCommit",
@@ -261,32 +281,39 @@ export function buildCommitContextMenuItems(
     }
   };
   const mergeItem: ContextMenuItem = {
-    title: `Merge into current branch${ELLIPSIS}`,
+    title: `${t("Merge into current branch")}${ELLIPSIS}`,
     recentActionId: "commit.merge",
     onClick: () => {
       const noFfDefault = viewState.dialogDefaults.merge.noFastForward;
       showFormDialog(
-        `Are you sure you want to merge commit <b><i>${abbrevCommit(hash)}</i></b> into the current branch?`,
+        t(
+          "Are you sure you want to merge commit {0} into the current branch?",
+          `<b><i>${abbrevCommit(hash)}</i></b>`
+        ),
         [
           {
             type: "checkbox",
-            name: "Create a new commit even if fast-forward is possible",
+            name: t("Create a new commit even if fast-forward is possible"),
             value: noFfDefault
           },
           {
             type: "checkbox",
-            name: "Squash Commits",
+            name: t("Squash Commits"),
             value: viewState.dialogDefaults.merge.squashCommits,
-            info: "Create a single commit on the current branch whose effect is the same as merging this branch. Squash does not create a commit automatically, so the No Commit option has no additional effect when Squash is enabled."
+            info: t(
+              "Create a single commit on the current branch whose effect is the same as merging this branch. Squash does not create a commit automatically, so the No Commit option has no additional effect when Squash is enabled."
+            )
           },
           {
             type: "checkbox",
-            name: "No Commit",
+            name: t("No Commit"),
             value: viewState.dialogDefaults.merge.noCommit,
-            info: "The changes of the merge will be staged but not committed, so that you can review and/or modify the merge result before committing."
+            info: t(
+              "The changes of the merge will be staged but not committed, so that you can review and/or modify the merge result before committing."
+            )
           }
         ],
-        "Yes, merge",
+        t("Yes, merge"),
         (values) => {
           recordRecentAction(repo, "commit.merge");
           sendMessage({
@@ -320,17 +347,21 @@ export function buildCommitContextMenuItems(
     }
   };
   const resetItem: ContextMenuItem = {
-    title: `Reset current branch to this Commit${ELLIPSIS}`,
+    title: `${t("Reset current branch to this Commit")}${ELLIPSIS}`,
     onClick: () => {
       showSelectDialog(
-        `Are you sure you want to reset the <b>current branch</b> to commit <b><i>${abbrevCommit(hash)}</i></b>?`,
+        t(
+          "Are you sure you want to reset the {0} to commit {1}?",
+          "<b>current branch</b>",
+          `<b><i>${abbrevCommit(hash)}</i></b>`
+        ),
         "mixed",
         [
-          { name: "Soft - Keep all changes, but reset head", value: "soft" },
-          { name: "Mixed - Keep working tree, but reset index", value: "mixed" },
-          { name: "Hard - Discard all changes", value: "hard" }
+          { name: t("Soft - Keep all changes, but reset head"), value: "soft" },
+          { name: t("Mixed - Keep working tree, but reset index"), value: "mixed" },
+          { name: t("Hard - Discard all changes"), value: "hard" }
         ],
-        "Yes, reset",
+        t("Yes, reset"),
         (mode) => {
           sendMessage({
             command: "resetToCommit",
@@ -344,7 +375,7 @@ export function buildCommitContextMenuItems(
     }
   };
   const copyCommitHashItem: ContextMenuItem = {
-    title: "Copy Commit Hash to Clipboard",
+    title: t("context.copyCommitHash"),
     onClick: () => {
       sendMessage({ command: "copyToClipboard", type: "Commit Hash", data: hash });
     }
@@ -357,7 +388,7 @@ export function buildCommitContextMenuItems(
     mergeItem,
     null,
     {
-      title: "More...",
+      title: t("context.more"),
       submenu: [addTagItem, checkoutItem, revertItem, resetItem]
     },
     null,

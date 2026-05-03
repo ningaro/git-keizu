@@ -1,4 +1,5 @@
-import { months, pad2 } from "./utils";
+import { getWebviewLocale, t } from "./i18n";
+import { pad2 } from "./utils";
 
 const SECONDS_IN_MINUTE = 60;
 const SECONDS_IN_HOUR = 3600;
@@ -10,7 +11,10 @@ const SECONDS_IN_YEAR = 31557600;
 export function getCommitDate(dateVal: number) {
   let date = new Date(dateVal * 1000),
     value;
-  let dateStr = `${date.getDate()} ${months[date.getMonth()]} ${date.getFullYear()}`;
+  let dateStr =
+    getWebviewLocale() === "ja"
+      ? `${date.getFullYear()}-${pad2(date.getMonth() + 1)}-${pad2(date.getDate())}`
+      : `${date.getDate()} ${t(`date.month.short.${date.getMonth()}`)} ${date.getFullYear()}`;
   let timeStr = `${pad2(date.getHours())}:${pad2(date.getMinutes())}`;
 
   switch (viewState.dateFormat) {
@@ -42,7 +46,7 @@ export function getCommitDate(dateVal: number) {
         diff /= SECONDS_IN_YEAR;
       }
       diff = Math.round(diff);
-      value = `${diff} ${unit}${diff !== 1 ? "s" : ""} ago`;
+      value = t(`date.relative.${unit}.${diff === 1 ? "one" : "other"}`, diff);
       break;
     default:
       value = `${dateStr} ${timeStr}`;

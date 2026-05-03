@@ -4,6 +4,7 @@ import {
   showFormDialog,
   showSelectDialog
 } from "./dialogs";
+import { t } from "./i18n";
 import { ELLIPSIS, sendMessage } from "./utils";
 
 export function buildUncommittedContextMenuItems(
@@ -12,24 +13,24 @@ export function buildUncommittedContextMenuItems(
 ): ContextMenuElement[] {
   return [
     {
-      title: `Stash uncommitted changes${ELLIPSIS}`,
+      title: `${t("Stash uncommitted changes")}${ELLIPSIS}`,
       onClick: () => {
         showFormDialog(
-          "Stash uncommitted changes:",
+          t("Stash uncommitted changes:"),
           [
             {
               type: "text" as const,
-              name: "Message: ",
+              name: t("Message: "),
               default: "",
-              placeholder: "Optional"
+              placeholder: t("Optional")
             },
             {
               type: "checkbox" as const,
-              name: "Include Untracked",
+              name: t("Include Untracked"),
               value: viewState.dialogDefaults.stashUncommittedChanges.includeUntracked
             }
           ],
-          "Stash Changes",
+          t("Stash Changes"),
           (values) => {
             sendMessage({
               command: "pushStash",
@@ -43,19 +44,25 @@ export function buildUncommittedContextMenuItems(
       }
     },
     {
-      title: `Reset uncommitted changes${ELLIPSIS}`,
+      title: `${t("Reset uncommitted changes")}${ELLIPSIS}`,
       onClick: () => {
         showSelectDialog(
-          "Select the mode to reset uncommitted changes:",
+          t("Select the mode to reset uncommitted changes:"),
           "mixed",
           [
-            { name: "Mixed - Keep changes in working directory", value: "mixed" },
-            { name: "Hard - Discard all changes", value: "hard" }
+            { name: t("Mixed - Keep changes in working directory"), value: "mixed" },
+            { name: t("Hard - Discard all changes"), value: "hard" }
           ],
-          "Reset",
+          t("Reset"),
           (mode) => {
             showConfirmationDialog(
-              `Are you sure you want to reset uncommitted changes with <b>${mode}</b> mode?${mode === "hard" ? " This will discard all uncommitted changes and cannot be undone." : ""}`,
+              t(
+                "Are you sure you want to reset uncommitted changes with {0} mode?{1}",
+                `<b>${mode}</b>`,
+                mode === "hard"
+                  ? t(" This will discard all uncommitted changes and cannot be undone.")
+                  : ""
+              ),
               () => {
                 sendMessage({
                   command: "resetUncommitted",
@@ -71,13 +78,13 @@ export function buildUncommittedContextMenuItems(
       }
     },
     {
-      title: `Clean untracked files${ELLIPSIS}`,
+      title: `${t("Clean untracked files")}${ELLIPSIS}`,
       onClick: () => {
         showCheckboxDialog(
-          "Are you sure you want to clean untracked files? This cannot be undone.",
-          "Clean untracked directories",
+          t("Are you sure you want to clean untracked files? This cannot be undone."),
+          t("Clean untracked directories"),
           false,
-          "Clean",
+          t("Clean"),
           (directories) => {
             sendMessage({
               command: "cleanUntrackedFiles",

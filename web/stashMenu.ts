@@ -1,4 +1,5 @@
 import { showCheckboxDialog, showConfirmationDialog, showRefInputDialog } from "./dialogs";
+import { t } from "./i18n";
 import { ELLIPSIS, escapeHtml, sendMessage } from "./utils";
 
 export function buildStashContextMenuItems(
@@ -8,13 +9,13 @@ export function buildStashContextMenuItems(
   sourceElem: HTMLElement
 ): ContextMenuElement[] {
   const applyStashItem: ContextMenuItem = {
-    title: `Apply Stash${ELLIPSIS}`,
+    title: `${t("Apply Stash")}${ELLIPSIS}`,
     onClick: () => {
       showCheckboxDialog(
-        `Are you sure you want to apply <b><i>${escapeHtml(selector)}</i></b>?`,
-        "Reinstate Index",
+        t("Are you sure you want to apply {0}?", `<b><i>${escapeHtml(selector)}</i></b>`),
+        t("Reinstate Index"),
         false,
-        "Yes, apply stash",
+        t("Yes, apply stash"),
         (reinstateIndex) => {
           sendMessage({
             command: "applyStash",
@@ -28,12 +29,15 @@ export function buildStashContextMenuItems(
     }
   };
   const createBranchFromStashItem: ContextMenuItem = {
-    title: `Create Branch from Stash${ELLIPSIS}`,
+    title: `${t("Create Branch from Stash")}${ELLIPSIS}`,
     onClick: () => {
       showRefInputDialog(
-        `Enter the name of the branch you would like to create from <b><i>${escapeHtml(selector)}</i></b>:`,
+        t(
+          "Enter the name of the branch you would like to create from {0}:",
+          `<b><i>${escapeHtml(selector)}</i></b>`
+        ),
         "",
-        "Create Branch",
+        t("Create Branch"),
         (name) => {
           sendMessage({
             command: "branchFromStash",
@@ -47,13 +51,16 @@ export function buildStashContextMenuItems(
     }
   };
   const popStashItem: ContextMenuItem = {
-    title: `Pop Stash${ELLIPSIS}`,
+    title: `${t("Pop Stash")}${ELLIPSIS}`,
     onClick: () => {
       showCheckboxDialog(
-        `Are you sure you want to pop <b><i>${escapeHtml(selector)}</i></b>? This will remove the stash entry.`,
-        "Reinstate Index",
+        t(
+          "Are you sure you want to pop {0}? This will remove the stash entry.",
+          `<b><i>${escapeHtml(selector)}</i></b>`
+        ),
+        t("Reinstate Index"),
         false,
-        "Yes, pop stash",
+        t("Yes, pop stash"),
         (reinstateIndex) => {
           sendMessage({
             command: "popStash",
@@ -67,10 +74,13 @@ export function buildStashContextMenuItems(
     }
   };
   const dropStashItem: ContextMenuItem = {
-    title: `Drop Stash${ELLIPSIS}`,
+    title: `${t("Drop Stash")}${ELLIPSIS}`,
     onClick: () => {
       showConfirmationDialog(
-        `Are you sure you want to drop <b><i>${escapeHtml(selector)}</i></b>? This cannot be undone.`,
+        t(
+          "Are you sure you want to drop {0}? This cannot be undone.",
+          `<b><i>${escapeHtml(selector)}</i></b>`
+        ),
         () => {
           sendMessage({
             command: "dropStash",
@@ -83,7 +93,7 @@ export function buildStashContextMenuItems(
     }
   };
   const copyStashNameItem: ContextMenuItem = {
-    title: "Copy Stash Name to Clipboard",
+    title: t("Copy Stash Name to Clipboard"),
     onClick: () => {
       sendMessage({
         command: "copyToClipboard",
@@ -93,7 +103,7 @@ export function buildStashContextMenuItems(
     }
   };
   const copyStashHashItem: ContextMenuItem = {
-    title: "Copy Stash Hash to Clipboard",
+    title: t("Copy Stash Hash to Clipboard"),
     onClick: () => {
       sendMessage({
         command: "copyToClipboard",
@@ -108,7 +118,7 @@ export function buildStashContextMenuItems(
     popStashItem,
     null,
     {
-      title: "More...",
+      title: t("context.more"),
       submenu: [createBranchFromStashItem, dropStashItem]
     },
     null,

@@ -1,11 +1,11 @@
 import { recordRecentAction } from "./contextMenu";
 import {
-  showActionRunningDialog,
   showCheckboxDialog,
   showConfirmationDialog,
   showFormDialog,
   showRefInputDialog
 } from "./dialogs";
+import { t } from "./i18n";
 import {
   ELLIPSIS,
   escapeHtml,
@@ -37,32 +37,39 @@ export function parseRemoteRef(refName: string): ParsedRemoteRef {
 
 function buildMergeBranchMenuItem(repo: string, refName: string): ContextMenuItem {
   return {
-    title: `Merge into current branch${ELLIPSIS}`,
+    title: `${t("Merge into current branch")}${ELLIPSIS}`,
     recentActionId: "ref.mergeBranch",
     onClick: () => {
       const noFfDefault = viewState.dialogDefaults.merge.noFastForward;
       showFormDialog(
-        `Are you sure you want to merge branch <b><i>${escapeHtml(refName)}</i></b> into the current branch?`,
+        t(
+          "Are you sure you want to merge branch {0} into the current branch?",
+          `<b><i>${escapeHtml(refName)}</i></b>`
+        ),
         [
           {
             type: "checkbox",
-            name: "Create a new commit even if fast-forward is possible",
+            name: t("Create a new commit even if fast-forward is possible"),
             value: noFfDefault
           },
           {
             type: "checkbox",
-            name: "Squash Commits",
+            name: t("Squash Commits"),
             value: viewState.dialogDefaults.merge.squashCommits,
-            info: "Create a single commit on the current branch whose effect is the same as merging this branch. Squash does not create a commit automatically, so the No Commit option has no additional effect when Squash is enabled."
+            info: t(
+              "Create a single commit on the current branch whose effect is the same as merging this branch. Squash does not create a commit automatically, so the No Commit option has no additional effect when Squash is enabled."
+            )
           },
           {
             type: "checkbox",
-            name: "No Commit",
+            name: t("No Commit"),
             value: viewState.dialogDefaults.merge.noCommit,
-            info: "The changes of the merge will be staged but not committed, so that you can review and/or modify the merge result before committing."
+            info: t(
+              "The changes of the merge will be staged but not committed, so that you can review and/or modify the merge result before committing."
+            )
           }
         ],
-        "Yes, merge",
+        t("Yes, merge"),
         (values) => {
           recordRecentAction(repo, "ref.mergeBranch");
           sendMessage({
@@ -101,7 +108,7 @@ function buildWorktreeWarning(
   worktreeInfo: { path: string; isMainWorktree: boolean } | null | undefined
 ): string {
   if (worktreeInfo === null || worktreeInfo === undefined) return "";
-  return `<br><span class="dialogWarning">${svgIcons.alert} This branch has an active worktree at <b>${escapeHtml(worktreeInfo.path)}</b>. Force deleting will orphan the worktree directory (detached HEAD).</span>`;
+  return `<br><span class="dialogWarning">${svgIcons.alert} ${t("This branch has an active worktree at {0}. Force deleting will orphan the worktree directory (detached HEAD).", `<b>${escapeHtml(worktreeInfo.path)}</b>`)}</span>`;
 }
 
 function showDeleteBranchDialog(
@@ -111,20 +118,24 @@ function showDeleteBranchDialog(
   worktreeInfo?: { path: string; isMainWorktree: boolean } | null
 ): void {
   const worktreeWarning = buildWorktreeWarning(worktreeInfo);
-  const message = `Are you sure you want to delete the branch <b><i>${escapeHtml(refName)}</i></b>?${worktreeWarning}`;
+  const message = t(
+    "Are you sure you want to delete the branch {0}?{1}",
+    `<b><i>${escapeHtml(refName)}</i></b>`,
+    worktreeWarning
+  );
   const hasRemotes = remotes.length > 0;
   if (hasRemotes) {
     showFormDialog(
       message,
       [
-        { type: "checkbox", name: "Force Delete", value: false },
+        { type: "checkbox", name: t("Force Delete"), value: false },
         {
           type: "checkbox",
-          name: "Delete this branch on the remote",
+          name: t("Delete this branch on the remote"),
           value: false
         }
       ],
-      "Delete Branch",
+      t("Delete Branch"),
       (values) => {
         sendMessage({
           command: "deleteBranch",
@@ -139,9 +150,9 @@ function showDeleteBranchDialog(
   } else {
     showCheckboxDialog(
       message,
-      "Force Delete",
+      t("Force Delete"),
       false,
-      "Delete Branch",
+      t("Delete Branch"),
       (forceDelete) => {
         sendMessage({
           command: "deleteBranch",
@@ -170,10 +181,13 @@ export function buildRefContextMenuItems(
   if (sourceElem.classList.contains("tag")) {
     menu = [
       {
-        title: `Delete Tag${ELLIPSIS}`,
+        title: `${t("Delete Tag")}${ELLIPSIS}`,
         onClick: () => {
           showConfirmationDialog(
-            `Are you sure you want to delete the tag <b><i>${escapeHtml(refName)}</i></b>?`,
+            t(
+              "Are you sure you want to delete the tag {0}?",
+              `<b><i>${escapeHtml(refName)}</i></b>`
+            ),
             () => {
               sendMessage({ command: "deleteTag", repo: repo, tagName: refName });
             },
@@ -182,13 +196,12 @@ export function buildRefContextMenuItems(
         }
       },
       {
-        title: `Push Tag${ELLIPSIS}`,
+        title: `${t("Push Tag")}${ELLIPSIS}`,
         onClick: () => {
           showConfirmationDialog(
-            `Are you sure you want to push the tag <b><i>${escapeHtml(refName)}</i></b>?`,
+            t("Are you sure you want to push the tag {0}?", `<b><i>${escapeHtml(refName)}</i></b>`),
             () => {
               sendMessage({ command: "pushTag", repo: repo, tagName: refName });
-              showActionRunningDialog("Pushing Tag");
             },
             null
           );
@@ -199,10 +212,13 @@ export function buildRefContextMenuItems(
   } else if (isRemoteCombined || sourceElem.classList.contains("remote")) {
     const parsed = parseRemoteRef(refName);
     const deleteRemoteBranchItem: ContextMenuItem = {
-      title: `Delete Remote Branch${ELLIPSIS}`,
+      title: `${t("Delete Remote Branch")}${ELLIPSIS}`,
       onClick: () => {
         showConfirmationDialog(
-          `Are you sure you want to delete the remote branch <b><i>${escapeHtml(refName)}</i></b>?`,
+          t(
+            "Are you sure you want to delete the remote branch {0}?",
+            `<b><i>${escapeHtml(refName)}</i></b>`
+          ),
           () => {
             sendMessage({
               command: "deleteRemoteBranch",
@@ -217,33 +233,37 @@ export function buildRefContextMenuItems(
     };
     menu = [
       {
-        title: `Checkout Branch${ELLIPSIS}`,
+        title: `${t("Checkout Branch")}${ELLIPSIS}`,
         recentActionId: "ref.checkoutBranch",
         onClick: () => checkoutBranchAction(repo, sourceElem, refName, isRemoteCombined, true)
       },
       buildMergeBranchMenuItem(repo, refName),
       null,
       {
-        title: "More...",
+        title: t("context.more"),
         submenu: [deleteRemoteBranchItem]
       }
     ];
     copyType = "Branch Name";
   } else {
     const renameBranchItem: ContextMenuItem = {
-      title: `Rename Branch${ELLIPSIS}`,
+      title: `${t("Rename Branch")}${ELLIPSIS}`,
       onClick: () => {
         const renameWorktreeWarning =
           worktreeInfo !== null && worktreeInfo !== undefined
-            ? `<br><span class="dialogWarning">${svgIcons.alert} This branch has an active worktree at <b>${escapeHtml(worktreeInfo.path)}</b>. Renaming will not update the worktree directory name.</span>`
+            ? `<br><span class="dialogWarning">${svgIcons.alert} ${t("This branch has an active worktree at {0}. Renaming will not update the worktree directory name.", `<b>${escapeHtml(worktreeInfo.path)}</b>`)}</span>`
             : "";
         showFormDialog(
-          `Enter the new name for branch <b><i>${escapeHtml(refName)}</i></b>:${renameWorktreeWarning}`,
+          t(
+            "Enter the new name for branch {0}:{1}",
+            `<b><i>${escapeHtml(refName)}</i></b>`,
+            renameWorktreeWarning
+          ),
           [
             { type: "text-ref", name: "", default: refName },
-            { type: "checkbox", name: "Update upstream tracking", value: true }
+            { type: "checkbox", name: t("Update upstream tracking"), value: true }
           ],
-          "Rename Branch",
+          t("Rename Branch"),
           (values) => {
             sendMessage({
               command: "renameBranch",
@@ -262,7 +282,7 @@ export function buildRefContextMenuItems(
         ? []
         : [
             {
-              title: "Open in New Window",
+              title: t("Open in New Window"),
               recentActionId: "ref.openWorktreeInNewWindow",
               onClick: () => {
                 recordRecentAction(repo, "ref.openWorktreeInNewWindow");
@@ -274,7 +294,7 @@ export function buildRefContextMenuItems(
               }
             },
             {
-              title: "Reveal in File Manager",
+              title: t("Reveal in File Manager"),
               recentActionId: "ref.revealWorktreeInOS",
               onClick: () => {
                 recordRecentAction(repo, "ref.revealWorktreeInOS");
@@ -286,7 +306,7 @@ export function buildRefContextMenuItems(
               }
             },
             {
-              title: "Open Terminal Here",
+              title: t("Open Terminal Here"),
               recentActionId: "ref.openTerminal",
               onClick: () => {
                 recordRecentAction(repo, "ref.openTerminal");
@@ -299,7 +319,7 @@ export function buildRefContextMenuItems(
               }
             },
             {
-              title: "Copy Worktree Path",
+              title: t("Copy Worktree Path"),
               onClick: () => {
                 sendMessage({
                   command: "copyToClipboard",
@@ -313,27 +333,27 @@ export function buildRefContextMenuItems(
     const createWorktreeItem: ContextMenuItem | null =
       worktreeInfo === null || worktreeInfo === undefined
         ? {
-            title: `Create Worktree${ELLIPSIS}`,
+            title: `${t("Create Worktree")}${ELLIPSIS}`,
             recentActionId: "ref.createWorktree",
             onClick: () => {
               const repoName = getRepoName(repo);
               const defaultPath = `../${repoName}-${sanitizeBranchNameForPath(refName)}`;
               showFormDialog(
-                `Create worktree for branch <b><i>${escapeHtml(refName)}</i></b>:`,
+                t("Create worktree for branch {0}:", `<b><i>${escapeHtml(refName)}</i></b>`),
                 [
                   {
                     type: "text" as const,
-                    name: "Path: ",
+                    name: t("Path: "),
                     default: defaultPath,
                     placeholder: null
                   },
                   {
                     type: "checkbox" as const,
-                    name: "Open Terminal",
+                    name: t("Open Terminal"),
                     value: viewState.dialogDefaults.createWorktree.openTerminal
                   }
                 ],
-                "Create Worktree",
+                t("Create Worktree"),
                 (values) => {
                   recordRecentAction(repo, "ref.createWorktree");
                   sendMessage({
@@ -352,14 +372,17 @@ export function buildRefContextMenuItems(
 
     const resolvedRemotes = Array.isArray(remotes) && remotes.length > 0 ? remotes : [];
     const deleteBranchItem: ContextMenuItem = {
-      title: `Delete Branch${ELLIPSIS}`,
+      title: `${t("Delete Branch")}${ELLIPSIS}`,
       onClick: () => showDeleteBranchDialog(repo, refName, resolvedRemotes, worktreeInfo)
     };
     const rebaseBranchItem: ContextMenuItem = {
-      title: `Rebase current branch on Branch${ELLIPSIS}`,
+      title: `${t("Rebase current branch on Branch")}${ELLIPSIS}`,
       onClick: () => {
         showConfirmationDialog(
-          `Are you sure you want to rebase the current branch on <b><i>${escapeHtml(refName)}</i></b>?`,
+          t(
+            "Are you sure you want to rebase the current branch on {0}?",
+            `<b><i>${escapeHtml(refName)}</i></b>`
+          ),
           () => {
             sendMessage({
               command: "rebaseBranch",
@@ -374,19 +397,23 @@ export function buildRefContextMenuItems(
     const removeWorktreeItem: ContextMenuItem | null =
       worktreeInfo !== null && worktreeInfo !== undefined && !worktreeInfo.isMainWorktree
         ? {
-            title: `Remove Worktree${ELLIPSIS}`,
+            title: `${t("Remove Worktree")}${ELLIPSIS}`,
             onClick: () => {
               showFormDialog(
-                `Are you sure you want to remove the worktree for branch '${escapeHtml(refName)}' at '${escapeHtml(worktreeInfo.path)}'?`,
+                t(
+                  "Are you sure you want to remove the worktree for branch {0} at {1}?",
+                  `'${escapeHtml(refName)}'`,
+                  `'${escapeHtml(worktreeInfo.path)}'`
+                ),
                 [
                   {
                     type: "checkbox",
-                    name: `Also delete branch '${escapeHtml(refName)}' (git branch -d)`,
+                    name: t("Also delete branch {0} (git branch -d)", `'${escapeHtml(refName)}'`),
                     value: viewState.dialogDefaults.removeWorktree.deleteBranch,
-                    info: "Uses safe delete — unmerged branches will not be deleted."
+                    info: t("Uses safe delete — unmerged branches will not be deleted.")
                   }
                 ],
-                "Remove",
+                t("Remove"),
                 (values) => {
                   sendMessage({
                     command: "removeWorktree",
@@ -405,11 +432,11 @@ export function buildRefContextMenuItems(
     if (gitBranchHead === refName) {
       const baseMenu: ContextMenuElement[] = [
         {
-          title: "Pull",
+          title: t("Pull"),
           recentActionId: "ref.pull",
           onClick: () => {
             showConfirmationDialog(
-              `Are you sure you want to pull into <b><i>${escapeHtml(refName)}</i></b>?`,
+              t("Are you sure you want to pull into {0}?", `<b><i>${escapeHtml(refName)}</i></b>`),
               () => {
                 recordRecentAction(repo, "ref.pull");
                 sendMessage({ command: "pull", repo: repo });
@@ -419,11 +446,11 @@ export function buildRefContextMenuItems(
           }
         },
         {
-          title: "Push",
+          title: t("Push"),
           recentActionId: "ref.push",
           onClick: () => {
             showConfirmationDialog(
-              `Are you sure you want to push <b><i>${escapeHtml(refName)}</i></b>?`,
+              t("Are you sure you want to push {0}?", `<b><i>${escapeHtml(refName)}</i></b>`),
               () => {
                 recordRecentAction(repo, "ref.push");
                 sendMessage({ command: "push", repo: repo });
@@ -436,18 +463,18 @@ export function buildRefContextMenuItems(
 
       menu =
         worktreeItems.length === 0
-          ? [...baseMenu, null, { title: "More...", submenu: [renameBranchItem] }]
+          ? [...baseMenu, null, { title: t("context.more"), submenu: [renameBranchItem] }]
           : [
               ...baseMenu,
               null,
               ...worktreeItems,
               null,
-              { title: "More...", submenu: [renameBranchItem] }
+              { title: t("context.more"), submenu: [renameBranchItem] }
             ];
     } else {
       const localBaseMenu: ContextMenuElement[] = [
         {
-          title: "Checkout Branch",
+          title: t("Checkout Branch"),
           recentActionId: "ref.checkoutBranch",
           onClick: () => checkoutBranchAction(repo, sourceElem, refName, undefined, true)
         },
@@ -466,7 +493,7 @@ export function buildRefContextMenuItems(
           null,
           createWorktreeItem,
           null,
-          { title: "More...", submenu: moreSubmenuItems }
+          { title: t("context.more"), submenu: moreSubmenuItems }
         ];
       } else {
         menu = [
@@ -474,7 +501,7 @@ export function buildRefContextMenuItems(
           null,
           ...worktreeItems,
           null,
-          { title: "More...", submenu: moreSubmenuItems }
+          { title: t("context.more"), submenu: moreSubmenuItems }
         ];
       }
     }
@@ -482,7 +509,7 @@ export function buildRefContextMenuItems(
     copyType = "Branch Name";
   }
   menu.push(null, {
-    title: `Copy ${copyType} to Clipboard`,
+    title: t("context.copyToClipboard", t(copyType)),
     onClick: () => {
       sendMessage({ command: "copyToClipboard", type: copyType, data: refName });
     }
@@ -511,9 +538,12 @@ export function checkoutBranchAction(
     const parsed = parseRemoteRef(refName);
     const defaultBranchName = parsed.branchName || refName;
     showRefInputDialog(
-      `Enter the name of the new branch you would like to create when checking out <b><i>${escapeHtml(refName)}</i></b>:`,
+      t(
+        "Enter the name of the new branch you would like to create when checking out {0}:",
+        `<b><i>${escapeHtml(refName)}</i></b>`
+      ),
       defaultBranchName,
-      "Checkout Branch",
+      t("Checkout Branch"),
       (newBranch) => {
         if (recordAction) {
           recordRecentAction(repo, "ref.checkoutBranch");

@@ -1,3 +1,4 @@
+import { t } from "./i18n";
 import { sendMessage, svgIcons, vscode } from "./utils";
 
 const contextMenu = document.getElementById("contextMenu")!;
@@ -199,7 +200,7 @@ function buildItemsWithRecentActions(
   }
 
   return [
-    { kind: "label", title: "Recent", icon: svgIcons.history },
+    { kind: "label", title: t("context.recent"), icon: svgIcons.history },
     ...recentItems,
     null,
     ...items

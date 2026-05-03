@@ -1,7 +1,8 @@
 import type { GitFileChange } from "../src/types";
+import { t } from "./i18n";
 import { escapeHtml, svgIcons } from "./utils";
 
-const BINARY_FILE_TITLE = ' title="This is a binary file, unable to view diff."';
+const BINARY_FILE_TITLE = ` title="${t("file.binaryTitle")}"`;
 
 export function generateGitFileTree(gitFiles: GitFileChange[]) {
   let contents: GitFolderContents = {},
@@ -50,15 +51,15 @@ function buildFileItemHtml(gitFile: GitFileChange, displayName: string): string 
   const binaryTitle = diffPossible ? "" : BINARY_FILE_TITLE;
   const renameHtml =
     gitFile.type === "R"
-      ? ` <span class="gitFileRename" title="${escapeHtml(`${gitFile.oldFilePath} was renamed to ${gitFile.newFilePath}`)}">R</span>`
+      ? ` <span class="gitFileRename" title="${escapeHtml(t("file.renamed", gitFile.oldFilePath, gitFile.newFilePath))}">R</span>`
       : "";
   const addDelHtml =
     gitFile.type !== "A" && gitFile.type !== "D" && diffPossible
-      ? `<span class="gitFileAddDel">(<span class="gitFileAdditions" title="${gitFile.additions} addition${gitFile.additions !== 1 ? "s" : ""}">+${gitFile.additions}</span>|<span class="gitFileDeletions" title="${gitFile.deletions} deletion${gitFile.deletions !== 1 ? "s" : ""}">-${gitFile.deletions}</span>)</span>`
+      ? `<span class="gitFileAddDel">(<span class="gitFileAdditions" title="${t(gitFile.additions === 1 ? "file.addition.one" : "file.addition.other", gitFile.additions ?? 0)}">+${gitFile.additions}</span>|<span class="gitFileDeletions" title="${t(gitFile.deletions === 1 ? "file.deletion.one" : "file.deletion.other", gitFile.deletions ?? 0)}">-${gitFile.deletions}</span>)</span>`
       : "";
   const fileActionsHtml =
     gitFile.type !== "D"
-      ? `<span class="gitFileActions"><span class="gitFileAction openFile" title="Open File">${svgIcons.goToFile}</span></span>`
+      ? `<span class="gitFileActions"><span class="gitFileAction openFile" title="${t("context.openFile")}">${svgIcons.goToFile}</span></span>`
       : "";
   const oldPath = encodeURIComponent(gitFile.oldFilePath);
   const newPath = encodeURIComponent(gitFile.newFilePath);

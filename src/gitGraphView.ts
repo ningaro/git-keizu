@@ -8,6 +8,7 @@ import { getConfig } from "./config";
 import { DataSource } from "./dataSource";
 import { encodeDiffDocUri } from "./diffDocProvider";
 import { ExtensionState } from "./extensionState";
+import { getLocale, loadWebviewMessages, t as hostT } from "./i18n";
 import { RepoFileWatcher } from "./repoFileWatcher";
 import { RepoManager } from "./repoManager";
 import {
@@ -562,9 +563,11 @@ export class GitKeizuView {
     this.panel.webview.html = await this.getHtmlForWebview();
   }
 
-  private getHtmlForWebview() {
+  private async getHtmlForWebview() {
     const config = getConfig(),
       nonce = getNonce();
+    const locale = getLocale();
+    const webviewMessages = await loadWebviewMessages(this.extensionPath);
     const viewState: GitKeizuViewState = {
       commitOrdering: config.commitOrdering(),
       dateFormat: config.dateFormat(),
@@ -602,14 +605,14 @@ export class GitKeizuView {
     if (numRepos > 0) {
       body = `<body style="${colorVars}">
 			<div id="controls">
-				<span id="repoControl"><span class="unselectable">Repo: </span><div id="repoSelect" class="dropdown"></div></span>
-				<span id="branchControl"><span class="unselectable">Branches: </span><div id="branchSelect" class="dropdown"></div></span>
-				<span id="authorControl"><span class="unselectable">Authors: </span><div id="authorSelect" class="dropdown"></div></span>
-				<label id="showRemoteBranchesControl"><input type="checkbox" id="showRemoteBranchesCheckbox" value="1" checked><span class="customCheckbox"></span>Show Remote Branches</label>
-				<div id="searchBtn" title="Search"></div>
-				<div id="fetchBtn" title="Fetch --prune"></div>
-				<div id="currentBtn" title="Current"></div>
-				<div id="refreshBtn" title="Refresh"></div>
+				<span id="repoControl"><span class="unselectable">${hostT("Repo:")} </span><div id="repoSelect" class="dropdown"></div></span>
+				<span id="branchControl"><span class="unselectable">${hostT("Branches:")} </span><div id="branchSelect" class="dropdown"></div></span>
+				<span id="authorControl"><span class="unselectable">${hostT("Authors:")} </span><div id="authorSelect" class="dropdown"></div></span>
+				<label id="showRemoteBranchesControl"><input type="checkbox" id="showRemoteBranchesCheckbox" value="1" checked><span class="customCheckbox"></span>${hostT("Show Remote Branches")}</label>
+				<div id="searchBtn" title="${hostT("Search")}"></div>
+				<div id="fetchBtn" title="${hostT("Fetch --prune")}"></div>
+				<div id="currentBtn" title="${hostT("Current")}"></div>
+				<div id="refreshBtn" title="${hostT("Refresh")}"></div>
 			</div>
 			<div id="scrollContainer">
 				<div id="scrollShadow"></div>
@@ -622,21 +625,22 @@ export class GitKeizuView {
 			<ul id="contextMenu"></ul>
 			<div id="dialogBacking"></div>
 			<div id="dialog"></div>
+			<script nonce="${nonce}">var webviewLocale = ${JSON.stringify(locale)}; var webviewMessages = ${JSON.stringify(webviewMessages)};</script>
 			<script nonce="${nonce}">var viewState = ${JSON.stringify(viewState)};</script>
 			<script src="${this.getCompiledOutputUri("web.min.js")}"></script>
 			</body>`;
     } else {
       body = `<body class="unableToLoad" style="${colorVars}">
-			<h2>Unable to load Git Keizu</h2>
-			<p>Either the current workspace does not contain a Git repository, or the Git executable could not be found.</p>
-			<p>If you are using a portable Git installation, make sure you have set the Visual Studio Code Setting "git.path" to the path of your portable installation (e.g. "C:\\Program Files\\Git\\bin\\git.exe" on Windows).</p>
+			<h2>${hostT("Unable to load Git Keizu")}</h2>
+			<p>${hostT("Either the current workspace does not contain a Git repository, or the Git executable could not be found.")}</p>
+			<p>${hostT('If you are using a portable Git installation, make sure you have set the Visual Studio Code Setting "git.path" to the path of your portable installation (e.g. "C:\\\\Program Files\\\\Git\\\\bin\\\\git.exe" on Windows).')}</p>
 			</body>`;
     }
     this.isGraphViewLoaded = numRepos > 0;
 
     // CSP: font-src is required for codicon.ttf loaded by codicon.css
     return `<!DOCTYPE html>
-		<html lang="en">
+		<html lang="${locale}">
 			<head>
 				<meta charset="UTF-8">
 				<meta http-equiv="Content-Security-Policy" content="default-src 'none'; font-src ${this.panel.webview.cspSource}; style-src ${this.panel.webview.cspSource} 'unsafe-inline'; script-src ${this.panel.webview.cspSource} 'nonce-${nonce}'; img-src data:;">
@@ -709,9 +713,9 @@ export class GitKeizuView {
       const actualFromHash = commitHash === UNCOMMITTED_CHANGES_HASH ? "HEAD" : commitHash;
       const isWorkingTreeTarget = compareWithHash === UNCOMMITTED_CHANGES_HASH;
       const abbrevFrom =
-        commitHash === UNCOMMITTED_CHANGES_HASH ? "Uncommitted" : abbrevCommit(commitHash);
-      const abbrevTo = isWorkingTreeTarget ? "Uncommitted" : abbrevCommit(compareWithHash);
-      const title = `${fileName} (${abbrevFrom} ↔ ${abbrevTo})`;
+        commitHash === UNCOMMITTED_CHANGES_HASH ? hostT("Uncommitted") : abbrevCommit(commitHash);
+      const abbrevTo = isWorkingTreeTarget ? hostT("Uncommitted") : abbrevCommit(compareWithHash);
+      const title = hostT("{0} ({1} ↔ {2})", fileName, abbrevFrom, abbrevTo);
 
       try {
         const leftUri = encodeDiffDocUri(repo, oldFilePath, actualFromHash);
@@ -731,8 +735,9 @@ export class GitKeizuView {
     }
 
     if (commitHash === UNCOMMITTED_CHANGES_HASH) {
-      const changeDescription = type === "A" ? "Added" : type === "D" ? "Deleted" : "Modified";
-      const title = `${fileName} (Uncommitted - ${changeDescription})`;
+      const changeDescription =
+        type === "A" ? hostT("Added") : type === "D" ? hostT("Deleted") : hostT("Modified");
+      const title = hostT("{0} (Uncommitted - {1})", fileName, changeDescription);
       try {
         const leftUri =
           type === "A"
@@ -754,9 +759,9 @@ export class GitKeizuView {
     const abbrevHash = abbrevCommit(commitHash);
     const changeDescription =
       type === "A"
-        ? `Added in ${abbrevHash}`
+        ? hostT("Added in {0}", abbrevHash)
         : type === "D"
-          ? `Deleted in ${abbrevHash}`
+          ? hostT("Deleted in {0}", abbrevHash)
           : `${abbrevHash}^ ↔ ${abbrevHash}`;
     const title = `${fileName} (${changeDescription})`;
 

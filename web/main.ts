@@ -18,6 +18,7 @@ import {
 } from "./fileTree";
 import { findCommitElemWithId, FindWidget, getCommitElems } from "./findWidget";
 import { Graph } from "./graph";
+import { t } from "./i18n";
 import { handleMessage } from "./messageHandler";
 import { buildRefContextMenuItems, checkoutBranchAction } from "./refMenu";
 import { buildStashContextMenuItems } from "./stashMenu";
@@ -52,18 +53,18 @@ const STASH_NAVIGATION_TIMEOUT_MS = 5000;
 const SCROLL_AUTO_LOAD_THRESHOLD = 25;
 const COMMIT_DETAILS_COLSPAN = 4;
 const SECONDS_TO_MS = 1000;
-const ALL_AUTHORS_LABEL = "All Authors";
+const ALL_AUTHORS_LABEL = t("toolbar.allAuthors");
 const ALL_AUTHORS_VALUE = "";
-const ALL_BRANCHES_LABEL = "Show All";
+const ALL_BRANCHES_LABEL = t("toolbar.showAll");
 const ALL_BRANCHES_VALUE = "";
 const REMOTE_BRANCH_PREFIX = "remotes/";
 const GRAPH_AUTO_LAYOUT_MAX_RATIO = 0.4;
 const GRAPH_COL_MIN_WIDTH = 64;
 const COMMIT_ORDERING_MENU_ITEMS: { label: string; value: GG.RepoCommitOrdering }[] = [
-  { label: "Default", value: "default" },
-  { label: "Date", value: "date" },
-  { label: "Author Date", value: "author-date" },
-  { label: "Topological", value: "topo" }
+  { label: t("commitOrdering.default"), value: "default" },
+  { label: t("commitOrdering.date"), value: "date" },
+  { label: t("commitOrdering.authorDate"), value: "author-date" },
+  { label: t("commitOrdering.topological"), value: "topo" }
 ];
 const FILE_VIEW_LIST = "list" as const;
 const FILE_VIEW_TREE = "tree" as const;
@@ -72,8 +73,8 @@ const DEFAULT_FILE_VIEW_TYPE: FileViewType = FILE_VIEW_TREE;
 
 function getFileViewToggle(mode: FileViewType): { icon: string; title: string } {
   return mode === FILE_VIEW_LIST
-    ? { icon: svgIcons.treeView, title: "Switch to Tree View" }
-    : { icon: svgIcons.listView, title: "Switch to List View" };
+    ? { icon: svgIcons.treeView, title: t("toolbar.switchToTreeView") }
+    : { icon: svgIcons.listView, title: t("toolbar.switchToListView") };
 }
 
 function buildAuthorOptions(
@@ -140,7 +141,7 @@ class GitKeizuView {
     this.tableElem = document.getElementById("commitTable")!;
     this.footerElem = document.getElementById("footer")!;
     this.scrollContainerElem = document.getElementById("scrollContainer")!;
-    this.repoDropdown = new Dropdown("repoSelect", true, "Repos", (value) => {
+    this.repoDropdown = new Dropdown("repoSelect", true, t("toolbar.repos"), (value) => {
       this.currentRepo = value;
       this.maxCommits = this.config.initialLoadCommits;
       this.expandedCommit = null;
@@ -151,7 +152,7 @@ class GitKeizuView {
     this.branchDropdown = new Dropdown(
       "branchSelect",
       false,
-      "Branches",
+      t("toolbar.branches"),
       (values: string[]) => {
         this.selectedBranches = values;
         this.maxCommits = this.config.initialLoadCommits;
@@ -165,7 +166,7 @@ class GitKeizuView {
     this.authorDropdown = new Dropdown(
       "authorSelect",
       false,
-      "Authors",
+      t("toolbar.authors"),
       (values: string[]) => {
         this.selectedAuthors = values;
         this.maxCommits = this.config.initialLoadCommits;
@@ -621,8 +622,7 @@ class GitKeizuView {
   }
   private renderTable() {
     const savedScrollTop = this.scrollContainerElem.scrollTop;
-    let html =
-        '<tr id="tableColHeaders"><th id="tableHeaderGraphCol" class="tableColHeader">Graph</th><th class="tableColHeader">Description</th><th class="tableColHeader">Date</th><th class="tableColHeader">Author</th><th class="tableColHeader">Commit</th></tr>',
+    let html = `<tr id="tableColHeaders"><th id="tableHeaderGraphCol" class="tableColHeader">${t("table.graph")}</th><th class="tableColHeader">${t("table.description")}</th><th class="tableColHeader">${t("table.date")}</th><th class="tableColHeader">${t("table.author")}</th><th class="tableColHeader">${t("table.commit")}</th></tr>`,
       i,
       currentHash =
         this.commits.length > 0 && this.commits[0].hash === UNCOMMITTED_CHANGES_HASH
@@ -689,7 +689,7 @@ class GitKeizuView {
     }
     this.tableElem.innerHTML = `<table>${html}</table>`;
     this.footerElem.innerHTML = this.moreCommitsAvailable
-      ? '<div id="loadMoreCommitsBtn" class="roundedBtn">Load More Commits</div>'
+      ? `<div id="loadMoreCommitsBtn" class="roundedBtn">${t("table.loadMoreCommits")}</div>`
       : "";
     this.makeTableResizable();
     this.setupColumnHeaderContextMenu();
@@ -698,7 +698,7 @@ class GitKeizuView {
       document.getElementById("loadMoreCommitsBtn")!.addEventListener("click", () => {
         (<HTMLElement>(
           document.getElementById("loadMoreCommitsBtn")!.parentNode!
-        )).innerHTML = `<h2 id="loadingHeader">${svgIcons.loading}Loading ...</h2>`;
+        )).innerHTML = `<h2 id="loadingHeader">${svgIcons.loading}${t("loading.label")}</h2>`;
         this.maxCommits += this.config.loadMoreCommits;
         this.hideCommitDetails();
         this.saveState();
@@ -919,7 +919,7 @@ class GitKeizuView {
     if (isDialogActive()) hideDialog();
     if (isContextMenuActive()) hideContextMenu();
     this.graph.clear();
-    this.tableElem.innerHTML = `<h2 id="loadingHeader">${svgIcons.loading}Loading ...</h2>`;
+    this.tableElem.innerHTML = `<h2 id="loadingHeader">${svgIcons.loading}${t("loading.label")}</h2>`;
     this.footerElem.innerHTML = "";
     this.findWidget.setInputEnabled(false);
   }
@@ -1325,11 +1325,11 @@ class GitKeizuView {
     if (this.expandedCommit.loading) {
       const loadingLabel =
         this.expandedCommit.hash === UNCOMMITTED_CHANGES_HASH
-          ? "Uncommitted Changes"
-          : "Commit Details";
+          ? t("commitDetails.uncommittedChanges")
+          : t("commitDetails.label");
       elem.innerHTML =
         `<td></td><td colspan="${COMMIT_DETAILS_COLSPAN}">` +
-        `<div id="cdvLoading">${svgIcons.loading} Loading ${loadingLabel} ...</div>` +
+        `<div id="cdvLoading">${svgIcons.loading} ${t("loading.commitDetails", loadingLabel)}</div>` +
         `<div id="commitDetailsClose">${svgIcons.close}</div>` +
         "</td>";
       document.getElementById("commitDetailsClose")!.addEventListener("click", () => {
@@ -1434,16 +1434,16 @@ class GitKeizuView {
     const toLabel = escapeHtml(order.to);
     return (
       `<span class="commitDetailsSummaryTop"><span class="commitDetailsSummaryTopRow"><span class="commitDetailsSummaryKeyValues">` +
-      `Displaying all changes from ${fromLabel} to ${toLabel}.` +
+      t("commitDetails.displayingChanges", fromLabel, toLabel) +
       "</span></span></span>"
     );
   }
   private buildUncommittedSummaryHtml(commitDetails: GG.GitCommitDetails): string {
     const fileCount = commitDetails.fileChanges.length;
-    const fileSuffix = fileCount !== 1 ? "s" : "";
+    const fileLabel = t(fileCount === 1 ? "commitDetails.file.one" : "commitDetails.file.other");
     return (
       `<span class="commitDetailsSummaryTop"><span class="commitDetailsSummaryTopRow"><span class="commitDetailsSummaryKeyValues">` +
-      `<b>Uncommitted Changes</b> (${fileCount} file${fileSuffix})` +
+      `<b>${t("commitDetails.uncommittedChanges")}</b> (${fileCount} ${fileLabel})` +
       "</span></span></span>"
     );
   }
@@ -1461,18 +1461,18 @@ class GitKeizuView {
 
     return (
       `<span class="commitDetailsSummaryTop${avatarClass}"><span class="commitDetailsSummaryTopRow"><span class="commitDetailsSummaryKeyValues">` +
-      `<b>Commit: </b>${escapeHtml(commitDetails.hash)}<br>` +
-      `<b>Parents: </b>${parentLinks}<br>` +
-      `<b>Author: </b>${escapeHtml(commitDetails.author)} &lt;<a href="mailto:${encodeURIComponent(commitDetails.email)}">${escapeHtml(commitDetails.email)}</a>&gt;<br>` +
-      `<b>Committer: </b>${committerHtml}<br>` +
-      `<b>Date: </b>${new Date(commitDetails.date * SECONDS_TO_MS).toString()}</span>` +
+      `<b>${t("commitDetails.commit")} </b>${escapeHtml(commitDetails.hash)}<br>` +
+      `<b>${t("commitDetails.parents")} </b>${parentLinks}<br>` +
+      `<b>${t("commitDetails.author")} </b>${escapeHtml(commitDetails.author)} &lt;<a href="mailto:${encodeURIComponent(commitDetails.email)}">${escapeHtml(commitDetails.email)}</a>&gt;<br>` +
+      `<b>${t("commitDetails.committer")} </b>${committerHtml}<br>` +
+      `<b>${t("commitDetails.date")} </b>${new Date(commitDetails.date * SECONDS_TO_MS).toString()}</span>` +
       avatarHtml +
       "</span></span><br><br>" +
       escapeHtml(commitDetails.body).replace(/\n/g, "<br>")
     );
   }
   private buildParentLinksHtml(parents: string[]): string {
-    if (parents.length === 0) return "None";
+    if (parents.length === 0) return t("commitDetails.none");
     return parents
       .map((hash) => {
         const escapedHash = escapeHtml(hash);

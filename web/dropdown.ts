@@ -1,3 +1,4 @@
+import { t } from "./i18n";
 import { escapeHtml, svgIcons } from "./utils";
 
 export const MIN_DROPDOWN_WIDTH = 130;
@@ -59,7 +60,7 @@ export class Dropdown {
     filter.className = "dropdownFilter";
     this.filterInput = document.createElement("input");
     this.filterInput.className = "dropdownFilterInput";
-    this.filterInput.placeholder = `Filter ${dropdownType}...`;
+    this.filterInput.placeholder = t("dropdown.filter", dropdownType);
     filter.appendChild(this.filterInput);
     this.menuElem = document.createElement("div");
     this.menuElem.className = this.multipleAllowed
@@ -69,7 +70,7 @@ export class Dropdown {
     this.optionsElem.className = "dropdownOptions";
     this.noResultsElem = document.createElement("div");
     this.noResultsElem.className = "dropdownNoResults";
-    this.noResultsElem.innerHTML = "No results found.";
+    this.noResultsElem.innerHTML = t("dropdown.noResults");
     if (this.multipleAllowed) {
       this.scrollWrapperElem = document.createElement("div");
       this.scrollWrapperElem.className = "dropdownScrollWrapper";
@@ -81,14 +82,14 @@ export class Dropdown {
       hintElem.className = "dropdownHint";
       const applyBtn = document.createElement("span");
       applyBtn.className = "dropdownHintBtn";
-      applyBtn.innerHTML = `<span class="dropdownHintKey">Enter</span> Apply`;
+      applyBtn.innerHTML = `<span class="dropdownHintKey">Enter</span> ${t("dropdown.apply")}`;
       applyBtn.addEventListener("click", (e) => {
         e.stopPropagation();
         this.close();
       });
       const cancelBtn = document.createElement("span");
       cancelBtn.className = "dropdownHintBtn";
-      cancelBtn.innerHTML = `<span class="dropdownHintKey">Esc</span> Cancel`;
+      cancelBtn.innerHTML = `<span class="dropdownHintKey">Esc</span> ${t("dropdown.cancel")}`;
       cancelBtn.addEventListener("click", (e) => {
         e.stopPropagation();
         this.cancelAndClose();
@@ -273,7 +274,7 @@ export class Dropdown {
       return { name: this.options[idx].name, title: this.options[idx].name };
     }
     const names = [...this.selectedIndices].sort((a, b) => a - b).map((i) => this.options[i].name);
-    return { name: `${this.selectedIndices.size} selected`, title: names.join(", ") };
+    return { name: t("dropdown.selected", this.selectedIndices.size), title: names.join(", ") };
   }
 
   private filter() {

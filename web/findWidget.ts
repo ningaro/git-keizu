@@ -1,6 +1,7 @@
 import * as GG from "../src/types";
 import { getBranchLabels } from "./branchLabels";
 import { getCommitDate } from "./dates";
+import { t } from "./i18n";
 import { svgIcons, UNCOMMITTED_CHANGES_HASH } from "./utils";
 
 /* === Constants === */
@@ -15,7 +16,7 @@ const CLASS_TRANSITION = "transition";
 const CLASS_DISABLED = "disabled";
 const ATTR_ERROR = "data-error";
 const ABBREV_COMMIT_LENGTH = 8;
-const ZERO_LENGTH_MATCH_ERROR = "Cannot use a regular expression which has zero length matches";
+const ZERO_LENGTH_MATCH_ERROR = "find.zeroLengthRegex";
 
 /* === DOM Helpers === */
 
@@ -102,14 +103,14 @@ export class FindWidget {
     this.widgetElem = document.createElement("div");
     this.widgetElem.className = "findWidget";
     this.widgetElem.innerHTML = [
-      '<input id="findInput" type="text" placeholder="Find" disabled/>',
-      '<span id="findCaseSensitive" class="findModifier" title="Match Case">Aa</span>',
-      '<span id="findRegex" class="findModifier" title="Use Regular Expression">.*</span>',
+      `<input id="findInput" type="text" placeholder="${t("find.placeholder")}" disabled/>`,
+      `<span id="findCaseSensitive" class="findModifier" title="${t("find.matchCase")}">Aa</span>`,
+      `<span id="findRegex" class="findModifier" title="${t("find.useRegex")}">.*</span>`,
       '<span id="findPosition"></span>',
-      '<span id="findPrev" title="Previous match (Shift+Enter)"></span>',
-      '<span id="findNext" title="Next match (Enter)"></span>',
-      '<span id="findOpenCdv" title="Open the Commit Details View for the current match"></span>',
-      '<span id="findClose" title="Close (Escape)"></span>'
+      `<span id="findPrev" title="${t("find.previous")}"></span>`,
+      `<span id="findNext" title="${t("find.next")}"></span>`,
+      `<span id="findOpenCdv" title="${t("find.openCommitDetails")}"></span>`,
+      `<span id="findClose" title="${t("find.close")}"></span>`
     ].join("");
     document.body.appendChild(this.widgetElem);
 
@@ -375,7 +376,7 @@ export class FindWidget {
         }
 
         if (zeroLengthMatch) {
-          this.widgetElem.setAttribute(ATTR_ERROR, ZERO_LENGTH_MATCH_ERROR);
+          this.widgetElem.setAttribute(ATTR_ERROR, t(ZERO_LENGTH_MATCH_ERROR));
           this.clearMatches();
           this.matches = [];
         }
@@ -441,7 +442,9 @@ export class FindWidget {
       }
     }
     this.positionElem.textContent =
-      this.matches.length > 0 ? `${this.position + 1} of ${this.matches.length}` : "No Results";
+      this.matches.length > 0
+        ? t("find.position", this.position + 1, this.matches.length)
+        : t("find.noResults");
     this.callbacks.saveState();
   }
 

@@ -30,20 +30,6 @@ export const svgIcons = {
   treeView: '<span class="codicon codicon-list-tree"></span>',
   worktree: '<span class="codicon codicon-worktree-small"></span>'
 };
-export const months = [
-  "Jan",
-  "Feb",
-  "Mar",
-  "Apr",
-  "May",
-  "Jun",
-  "Jul",
-  "Aug",
-  "Sep",
-  "Oct",
-  "Nov",
-  "Dec"
-];
 const htmlEscapes: { [key: string]: string } = {
   "&": "&amp;",
   "<": "&lt;",
