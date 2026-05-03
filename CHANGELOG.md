@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.7.1] - 2026-05-04
+
+### Fixed
+
+- **Japanese localization not applied in installed extension**: The packaged `.vsix` for v0.7.0 was missing every localization asset — `package.nls.json`, `package.nls.ja.json`, and the `l10n/` bundle directory — because the `.vscodeignore` whitelist did not include them, leaving the installed extension in English even when VS Code's display language was set to Japanese. The whitelist now explicitly includes `l10n/` and the manifest NLS files, so the i18n bundles ship with the extension as intended. Debug runs from the source tree were unaffected (the extension host loads files directly from disk), which is why the regression slipped past pre-release verification.
+
 ## [0.7.0] - 2026-05-04
 
 ### Added
@@ -339,7 +345,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 Initial release as Git Keizu — forked from [neo-git-graph](https://github.com/asispts/neo-git-graph) (originally [Git Graph](https://github.com/mhutchie/vscode-git-graph) by mhutchie, MIT).
 
-[Unreleased]: https://github.com/numlia/git-keizu/compare/v0.7.0...HEAD
+[Unreleased]: https://github.com/numlia/git-keizu/compare/v0.7.1...HEAD
+[0.7.1]: https://github.com/numlia/git-keizu/compare/v0.7.0...v0.7.1
 [0.7.0]: https://github.com/numlia/git-keizu/compare/v0.6.0...v0.7.0
 [0.6.0]: https://github.com/numlia/git-keizu/compare/v0.5.23...v0.6.0
 [0.5.23]: https://github.com/numlia/git-keizu/compare/v0.5.22...v0.5.23
