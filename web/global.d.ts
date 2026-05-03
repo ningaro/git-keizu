@@ -8,6 +8,8 @@ declare global {
   };
 
   var viewState: GG.GitKeizuViewState;
+  var webviewLocale: "en" | "ja";
+  var webviewMessages: Record<string, string>;
 
   interface Config {
     fetchAvatars: boolean;
