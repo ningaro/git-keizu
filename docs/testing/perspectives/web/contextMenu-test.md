@@ -47,3 +47,20 @@
 | TC-015  | submenu 内の通常項目を click                                                  | Normal - submenu click                                                     | 対応する child `onClick` が 1 回呼ばれ、`#contextMenu` から `active` class が外れ、submenu 要素も除去される       | 親メニューごと閉じる             |
 | TC-016  | submenu が生成済みの状態で `hideContextMenu()` を呼ぶ                         | Normal - cleanup                                                           | `document.body .contextMenuSubmenu` が 0 件になり、親 sourceElem の `contextMenuActive` class も除去される        | リーク防止                       |
 | TC-017  | `ContextMenuElement[]` に `ContextMenuSubmenu` を含む構成を渡す               | Type - structural guard                                                    | `"submenu" in item` 分岐で submenu 要素が通常項目と区別され、通常項目 click handler が親項目には登録されない      | 型拡張とイベント誤配線の回帰防止 |
+
+## S3: Recent actions 合成と記録
+
+> Origin: Feature 034 (context-menu-recent-actions) Task 3
+> Added: 2026-05-02
+> Status: active
+> Supersedes: -
+> Signature: `showContextMenu(e: MouseEvent, items: ContextMenuElement[], sourceElem: HTMLElement, recentActions?: RecentActionId[]): void` / `recordRecentAction(repo: string, actionId: RecentActionId): void`
+> Target Path: `web/contextMenu.ts`
+
+| Case ID | Input / Precondition                                                                 | Perspective (Normal / Validation / Exception / External / Boundary / Type) | Expected Result                                                                                                                                              | Notes                           |
+| ------- | ------------------------------------------------------------------------------------ | -------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------ | ------------------------------- |
+| TC-018  | `showRecentActions = false`、menu 内に 2 件以上の recent 対象 item と一致履歴あり    | Validation - setting off                                                   | Recent block を追加せず、描画結果が元の top-level item のみになる                                                                                            | 描画のみ停止                    |
+| TC-019  | `showRecentActions = true`、menu 内に 2 件以上の recent 対象 item と一致履歴 2 件あり | Normal - prepend recent                                                    | 先頭に時計 icon 付き `Recent` 見出しが表示され、その下に履歴順の Recent item、divider 1 件、後段に元の通常メニューが順序不変で残る                         | top-level 合成 + 見出し表示     |
+| TC-020  | `showRecentActions = true`、menu 内の recent 対象 item が 1 件のみ                   | Boundary - insufficient eligible items                                     | Recent block を生成せず、通常メニューのみ描画する                                                                                                           | fileMenu 想定条件               |
+| TC-021  | `showRecentActions = true`、一致履歴が submenu child + top-level item を指す         | Normal - submenu coexistence                                               | 時計 icon 付き `Recent` 見出し配下に submenu child がフラット item として持ち上がりつつ、元の submenu DOM も従来どおり生成される                         | More... 構造維持                |
+| TC-022  | `recordRecentAction("/test/repo", "commit.createBranch")`、既存 recentActions あり   | Normal - local state + persistence                                         | `viewState.repos[repo].recentActions` が先頭追加 + dedupe された配列へ更新され、`saveRepoState` payload と `vscode.setState().gitRepos[repo]` も同値になる | local state 先更新 + host 保存 |

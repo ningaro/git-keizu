@@ -256,3 +256,18 @@ keybinding 設定は `parseKeybinding()` により変換されるため、packag
 | TC-074  | openNewTabEditorGroup = "One"                    | Normal - numbered group                                                    | vscode.ViewColumn.One が返される    | 番号指定グループ             |
 | TC-075  | openNewTabEditorGroup = "Nine"                   | Boundary - max group                                                       | vscode.ViewColumn.Nine が返される   | 最大グループ番号             |
 | TC-076  | openNewTabEditorGroup = "InvalidValue"（不正値） | Validation - invalid value                                                 | vscode.ViewColumn.Active が返される | フォールバック動作           |
+
+## S14: showRecentActions 設定
+
+> Origin: Feature 034 (context-menu-recent-actions) Task 1
+> Added: 2026-05-02
+> Status: active
+> Supersedes: -
+> Signature: `showRecentActions(): boolean`
+> Target Path: `src/config.ts`
+
+| Case ID | Input / Precondition                                 | Perspective (Normal / Validation / Exception / External / Boundary / Type) | Expected Result                                                                                     | Notes                               |
+| ------- | ---------------------------------------------------- | -------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------- | ----------------------------------- |
+| TC-078  | `menu.showRecentActions` 設定未指定                  | Normal - default                                                           | `showRecentActions()` が `true` を返す                                                              | 新規設定のデフォルト                |
+| TC-079  | `menu.showRecentActions = false`                     | Normal - explicit false                                                    | `showRecentActions()` が `false` を返す                                                             | 描画のみ OFF                        |
+| TC-080  | fallback getter と `package.json` default の整合確認 | Normal - cross-check                                                       | `tests/src/config-defaults.test.ts` で `showRecentActions()` の fallback 値が `package.json` default と一致する | static default 整合                 |

@@ -132,3 +132,19 @@
 | TC-036  | 同上                                 | Validation - submenu contents                                              | index 5 が `title === "More..."` の submenu で、child titles が `Add Tag...`, `Checkout...`, `Revert...`, `Reset...` の順       | 低頻度・破壊的操作の集約 |
 | TC-037  | parentHashes が 2 件のマージコミット | Normal - moved action path                                                 | `More...` 配下の `Revert...` と上段の `Cherry Pick...` の `onClick` が、既存どおり merge commit 向けダイアログ経路を呼ぶ        | 既存挙動保持             |
 | TC-038  | 通常コミット                         | Boundary - divider placement                                               | `null` が連続せず、先頭と末尾が `null` でなく、末尾が `Copy Commit Hash to Clipboard` である                                    | 区切り線ルール           |
+
+## S8: Recent actions 識別子と保存トリガー
+
+> Origin: Feature 034 (context-menu-recent-actions) Task 4
+> Added: 2026-05-02
+> Status: active
+> Supersedes: -
+> Signature: `buildCommitContextMenuItems(repo: string, hash: string, parentHashes: string[], commits: GitCommitNode[], commitLookup: { [hash: string]: number }, sourceElem: HTMLElement): ContextMenuElement[]`
+> Target Path: `web/commitMenu.ts`
+
+| Case ID | Input / Precondition                           | Perspective (Normal / Validation / Exception / External / Boundary / Type) | Expected Result                                                                                                                                       | Notes                         |
+| ------- | ---------------------------------------------- | -------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------- |
+| TC-039  | 通常コミット menu を構築                       | Normal - recent ids on top-level                                           | `Create Branch...`, `Create Worktree Here...`, `Cherry Pick...`, `Merge into current branch...` の各 item に対応する `recentActionId` が付与される | commit 上段 4 項目            |
+| TC-040  | 通常コミット menu の `More...` submenu を確認  | Validation - target-only tagging                                           | `Add Tag...` のみ `recentActionId = "commit.addTag"` を持ち、`Checkout...` / `Revert...` / `Reset...` は recent 対象外のまま                     | destructive / detached 除外   |
+| TC-041  | `Create Branch...` ダイアログ submit           | Normal - record before send                                                | submit callback 実行時に `recordRecentAction(repo, "commit.createBranch")` が `sendMessage(RequestCreateBranch)` より先に 1 回呼ばれる            | 呼出順保証                    |
+| TC-042  | `Add Tag...` menu item を押してダイアログ表示のみ | Boundary - dialog cancel                                                   | `showFormDialog` は開くが、submit callback 未実行の時点では `recordRecentAction(...)` は呼ばれない                                                 | キャンセルで履歴を増やさない |

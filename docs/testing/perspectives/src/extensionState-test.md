@@ -194,3 +194,18 @@
 | TC-032  | アバターディレクトリにファイルなし (空ディレクトリ) | Boundary - empty                                                           | `globalState.update("avatarCache", {})` が呼ばれ、`fs.readdir` は `[]` を返し、`fs.unlink` は呼ばれない             | L83-84。Promise.all([]) は即座に解決     |
 | TC-033  | fs.readdir がエラー (ディレクトリ不存在等)          | External - fs.readdir failure                                              | キャッシュは `globalState.update({})` でクリア済み。ファイル削除はスキップされサイレント失敗                        | L85-87。キャッシュとFSの不整合は許容     |
 | TC-034  | fs.unlink が一部ファイルで失敗                      | External - fs.unlink failure                                               | 他のファイルの `fs.unlink` は引き続き実行される (`Promise.all` + 個別 `.catch`)。キャッシュはクリア済み             | L84。`.catch(() => {})` で個別握りつぶし |
+
+## S13: saveRepos recentActions 正規化
+
+> Origin: Feature 034 (context-menu-recent-actions) Task 2
+> Added: 2026-05-02
+> Status: active
+> Supersedes: -
+> Signature: `public saveRepos(gitRepoSet: GitRepoSet): void`
+> Target Path: `src/extensionState.ts`
+
+| Case ID | Input / Precondition                                              | Perspective (Normal / Validation / Exception / External / Boundary / Type) | Expected Result                                                                                                                                  | Notes                        |
+| ------- | ----------------------------------------------------------------- | -------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------ | ---------------------------- |
+| TC-035  | `recentActions = ["commit.createBranch", "commit.createWorktree", "commit.createBranch", "ref.push"]` | Normal - dedupe order                                                      | `workspaceState.update("repoStates", ...)` に渡る `recentActions` が `["commit.createBranch", "commit.createWorktree", "ref.push"]` へ畳まれる | 先頭優先                     |
+| TC-036  | `recentActions` が 6 件以上のユニーク値を持つ                     | Boundary - max length                                                      | 永続化前に先頭 5 件へ切り詰められる                                                                                                             | `MAX_RECENT_ACTIONS = 5`     |
+| TC-037  | repo A は `recentActions` 未定義、repo B は空配列、他の state あり | Validation - empty and undefined                                           | `commitOrdering` / `fileViewType` / `columnWidths` など他フィールドは変わらず、未定義・空配列の repo state もそのまま保存できる              | 既存 state への影響なし      |

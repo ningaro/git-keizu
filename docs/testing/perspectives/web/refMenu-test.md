@@ -198,3 +198,20 @@
 | TC-062  | local non-HEAD 分岐、`worktreeInfo = null`                            | Normal - non-head no worktree                                              | `Checkout Branch`, `Merge into current branch...`, `Rebase current branch on Branch...`, `null`, `Create Worktree...`, `null`, `More...`, `null`, `Copy...` の順 | 非 HEAD の基本構成       |
 | TC-063  | local non-HEAD 分岐、`worktreeInfo = { path, isMainWorktree: false }` | Normal - non-head with worktree                                            | worktree 4 項目の後に `More...` submenu があり、child titles が `Rename Branch...`, `Delete Branch...`, `Remove Worktree...` の順になる                          | 動的 submenu             |
 | TC-064  | remote / local-HEAD / local-non-HEAD の各分岐                         | Validation - divider rules                                                 | いずれの配列でも連続 `null` が無く、先頭・末尾が `null` でない                                                                                                   | 区切り線ルール           |
+
+## S14: Recent actions 識別子と保存トリガー
+
+> Origin: Feature 034 (context-menu-recent-actions) Task 4
+> Added: 2026-05-02
+> Status: active
+> Supersedes: -
+> Signature: `buildRefContextMenuItems(...)` / `checkoutBranchAction(repo: string, sourceElem: HTMLElement, refName: string, isRemoteCombined?: boolean, recordAction?: boolean): void`
+> Target Path: `web/refMenu.ts`
+
+| Case ID | Input / Precondition                                              | Perspective (Normal / Validation / Exception / External / Boundary / Type) | Expected Result                                                                                                                                             | Notes                              |
+| ------- | ----------------------------------------------------------------- | -------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------- |
+| TC-065  | remote menu と HEAD + worktree menu を構築                        | Normal - target ids                                                        | `Checkout Branch...`, `Merge...`, `Pull`, `Push`, `Open in New Window`, `Reveal in File Manager`, `Open Terminal Here` に対応する `recentActionId` が付く | supported action 一覧              |
+| TC-066  | tag menu (`Delete Tag...`, `Push Tag...`)                         | Validation - excluded branch type                                          | tag 固有 action には `recentActionId` が付与されない                                                                                                       | tag は対象外                       |
+| TC-067  | `checkoutBranchAction(repo, elem, "feature/local")` を直接呼ぶ    | Boundary - non-menu path                                                   | `sendMessage(RequestCheckoutBranch)` は送るが `recordRecentAction(...)` は呼ばれない                                                                       | double click など共有経路の保護    |
+| TC-068  | HEAD menu の `Pull` で確認ダイアログを承認                        | Normal - record before send                                                | 確認 callback 内で `recordRecentAction(repo, "ref.pull")` が `sendMessage({ command: "pull" })` より先に呼ばれる                                         | safe action の保存順               |
+| TC-069  | worktree menu の `Open Terminal Here` を選択                      | Normal - worktree action persistence                                       | `recordRecentAction(repo, "ref.openTerminal")` が `sendMessage(RequestOpenTerminal)` より先に呼ばれ、payload は path / name を保持する                   | worktree action も Recent 対象     |

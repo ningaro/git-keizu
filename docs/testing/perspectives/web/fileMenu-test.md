@@ -41,3 +41,18 @@
 | TC-009  | expandedCommit が null                                 | Validation - missing commit context                                        | 空配列を返し、menu を表示しない                                                                                    | guard                    |
 | TC-010  | `data-newfilepath` 欠落など action helper の前提が不足 | Validation - missing dataset                                               | 空配列を返し、実行不能な menu item を生成しない                                                                    | guard                    |
 | TC-011  | TC-007 の items[0].onClick を実行                      | Normal - shared action reuse                                               | menu item 選択時の `sendMessage` payload が icon click と同一構造 `{ command, repo, filePath, commitHash }` になる | REQ-2.2 / REQ-2.3        |
+
+## S3: Recent actions 識別子と保存トリガー
+
+> Origin: Feature 034 (context-menu-recent-actions) Task 4
+> Added: 2026-05-02
+> Status: active
+> Supersedes: -
+> Signature: `buildFileContextMenuItems(fileRow, expandedCommit, repo): ContextMenuElement[]`
+> Target Path: `web/fileMenu.ts`
+
+| Case ID | Input / Precondition                                  | Perspective (Normal / Validation / Exception / External / Boundary / Type) | Expected Result                                                                                                                    | Notes                           |
+| ------- | ----------------------------------------------------- | -------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------- | ------------------------------- |
+| TC-012  | 有効な `.gitFile` row、expandedCommit.hash あり       | Normal - recent id                                                         | `Open File` item に `recentActionId = "file.openFile"` が付与される                                                               | 表示条件上、Recent block 自体は別責務 |
+| TC-013  | TC-012 の item を click                               | Normal - record before send                                                | `recordRecentAction(repo, "file.openFile")` が `openFile` payload 送信より先に呼ばれる                                           | sendOpenFileAction 再利用       |
+| TC-014  | expandedCommit が null で menu 自体が生成されない     | Validation - guard                                                         | 空配列を返し、`recordRecentAction(...)` も呼ばれない                                                                               | キャンセル相当                  |
