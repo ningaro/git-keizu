@@ -6,6 +6,9 @@
 !LICENSE
 !out/
 !media/
+!l10n/
+!package.nls.json
+!package.nls.ja.json
 
 !resources/icon.png
 !resources/webview-icon.svg
