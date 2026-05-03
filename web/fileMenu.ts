@@ -1,3 +1,4 @@
+import { recordRecentAction } from "./contextMenu";
 import { sendMessage } from "./utils";
 
 /** CSS selector for file row elements in both tree and list views. */
@@ -54,7 +55,11 @@ export function buildFileContextMenuItems(
   return [
     {
       title: OPEN_FILE_LABEL,
-      onClick: () => sendOpenFileAction(fileRow, expandedCommit, repo)
+      recentActionId: "file.openFile",
+      onClick: () => {
+        recordRecentAction(repo, "file.openFile");
+        sendOpenFileAction(fileRow, expandedCommit, repo);
+      }
     }
   ];
 }

@@ -1,7 +1,10 @@
+import { sendMessage, svgIcons, vscode } from "./utils";
+
 const contextMenu = document.getElementById("contextMenu")!;
 let contextMenuSource: HTMLElement | null = null;
 const POSITION_OFFSET = 2;
 const SUBMENU_HIDE_DELAY_MS = 150;
+const MAX_RECENT_ACTIONS = 5;
 let activeSubmenuIndex: number | null = null;
 const submenuHideTimers = new Map<number, number>();
 
@@ -9,8 +12,16 @@ function isContextMenuSubmenu(item: ContextMenuElement): item is ContextMenuSubm
   return item !== null && "submenu" in item;
 }
 
+function isContextMenuLabel(item: ContextMenuElement): item is ContextMenuLabel {
+  return item !== null && "kind" in item && item.kind === "label";
+}
+
 function isContextMenuItem(item: ContextMenuElement): item is ContextMenuItem {
   return item !== null && "onClick" in item;
+}
+
+function buildContextMenuLabelHtml(item: ContextMenuLabel): string {
+  return `<li class="contextMenuLabel">${item.icon ?? ""}<span class="contextMenuLabelText">${item.title}</span></li>`;
 }
 
 function getSubmenuElement(index: number): HTMLUListElement | null {
@@ -104,12 +115,90 @@ function buildSubmenuHtml(items: ContextMenuElement[], parentIndex: number): str
       continue;
     }
 
+    if (isContextMenuLabel(child)) {
+      html += buildContextMenuLabelHtml(child);
+      continue;
+    }
+
     if (isContextMenuItem(child)) {
       html += `<li class="contextMenuItem" data-submenu-parent="${parentIndex}" data-submenu-child="${childIndex}">${child.title}</li>`;
     }
   }
 
   return html;
+}
+
+function normalizeRecentActions(recentActions: GG.RecentActionId[]): GG.RecentActionId[] {
+  const seen = new Set<GG.RecentActionId>();
+  const normalizedRecentActions: GG.RecentActionId[] = [];
+
+  for (const actionId of recentActions) {
+    if (seen.has(actionId)) {
+      continue;
+    }
+    seen.add(actionId);
+    normalizedRecentActions.push(actionId);
+    if (normalizedRecentActions.length === MAX_RECENT_ACTIONS) {
+      break;
+    }
+  }
+
+  return normalizedRecentActions;
+}
+
+function collectRecentActionItems(
+  items: ContextMenuElement[],
+  recentActionItems = new Map<GG.RecentActionId, ContextMenuItem>()
+): Map<GG.RecentActionId, ContextMenuItem> {
+  for (const item of items) {
+    if (item === null) {
+      continue;
+    }
+
+    if (isContextMenuSubmenu(item)) {
+      collectRecentActionItems(item.submenu, recentActionItems);
+      continue;
+    }
+
+    if (isContextMenuLabel(item)) {
+      continue;
+    }
+
+    if (item.recentActionId !== undefined && !recentActionItems.has(item.recentActionId)) {
+      recentActionItems.set(item.recentActionId, item);
+    }
+  }
+
+  return recentActionItems;
+}
+
+function buildItemsWithRecentActions(
+  items: ContextMenuElement[],
+  recentActions: GG.RecentActionId[] | undefined
+): ContextMenuElement[] {
+  if (
+    typeof viewState === "undefined" ||
+    viewState.showRecentActions !== true ||
+    recentActions === undefined ||
+    recentActions.length === 0
+  ) {
+    return items;
+  }
+
+  const recentActionItems = collectRecentActionItems(items);
+  if (recentActionItems.size < 2) {
+    return items;
+  }
+
+  const recentItems = normalizeRecentActions(recentActions)
+    .map((actionId) => recentActionItems.get(actionId))
+    .filter((item): item is ContextMenuItem => item !== undefined);
+
+  if (recentItems.length === 0) {
+    return items;
+  }
+
+  return [{ kind: "label", title: "Recent", icon: svgIcons.history }, ...recentItems, null, ...items];
 }
 
 function addSubmenuElements(items: ContextMenuElement[]): void {
@@ -161,15 +250,22 @@ function addSubmenuElements(items: ContextMenuElement[]): void {
 export function showContextMenu(
   e: MouseEvent,
   items: ContextMenuElement[],
-  sourceElem: HTMLElement
+  sourceElem: HTMLElement,
+  recentActions?: GG.RecentActionId[]
 ) {
+  const itemsToRender = buildItemsWithRecentActions(items, recentActions);
   let html = "";
   const event = e as MouseEvent;
 
-  for (let index = 0; index < items.length; index++) {
-    const item = items[index];
+  for (let index = 0; index < itemsToRender.length; index++) {
+    const item = itemsToRender[index];
     if (item === null) {
       html += '<li class="contextMenuDivider"></li>';
+      continue;
+    }
+
+    if (isContextMenuLabel(item)) {
+      html += buildContextMenuLabelHtml(item);
       continue;
     }
 
@@ -185,7 +281,7 @@ export function showContextMenu(
   contextMenu.style.opacity = "0";
   contextMenu.className = "active";
   contextMenu.innerHTML = html;
-  addSubmenuElements(items);
+  addSubmenuElements(itemsToRender);
 
   const bounds = contextMenu.getBoundingClientRect();
   contextMenu.style.left = `${Math.max(
@@ -209,7 +305,7 @@ export function showContextMenu(
         clickEvent.stopPropagation();
         const index = Number.parseInt(menuItemEl.dataset.index ?? "", 10);
         hideContextMenu();
-        const item = items[index];
+        const item = itemsToRender[index];
         if (isContextMenuItem(item)) {
           item.onClick();
         }
@@ -252,6 +348,40 @@ export function showContextMenu(
 
   contextMenuSource = sourceElem;
   contextMenuSource.classList.add("contextMenuActive");
+}
+
+export function recordRecentAction(repo: string, actionId: GG.RecentActionId): void {
+  if (typeof viewState === "undefined") {
+    return;
+  }
+
+  const repoState = viewState.repos[repo];
+  if (repoState === undefined) {
+    return;
+  }
+
+  const updatedRepoState: GG.GitRepoState = {
+    ...repoState,
+    recentActions: normalizeRecentActions([actionId, ...(repoState.recentActions ?? [])])
+  };
+  viewState.repos[repo] = updatedRepoState;
+
+  const webviewState = vscode.getState();
+  if (webviewState !== null) {
+    vscode.setState({
+      ...webviewState,
+      gitRepos: {
+        ...webviewState.gitRepos,
+        [repo]: updatedRepoState
+      }
+    });
+  }
+
+  sendMessage({
+    command: "saveRepoState",
+    repo,
+    state: updatedRepoState
+  });
 }
 
 export function hideContextMenu() {

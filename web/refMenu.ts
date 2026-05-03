@@ -5,6 +5,7 @@ import {
   showFormDialog,
   showRefInputDialog
 } from "./dialogs";
+import { recordRecentAction } from "./contextMenu";
 import {
   ELLIPSIS,
   escapeHtml,
@@ -37,6 +38,7 @@ export function parseRemoteRef(refName: string): ParsedRemoteRef {
 function buildMergeBranchMenuItem(repo: string, refName: string): ContextMenuItem {
   return {
     title: `Merge into current branch${ELLIPSIS}`,
+    recentActionId: "ref.mergeBranch",
     onClick: () => {
       const noFfDefault = viewState.dialogDefaults.merge.noFastForward;
       showFormDialog(
@@ -62,6 +64,7 @@ function buildMergeBranchMenuItem(repo: string, refName: string): ContextMenuIte
         ],
         "Yes, merge",
         (values) => {
+          recordRecentAction(repo, "ref.mergeBranch");
           sendMessage({
             command: "mergeBranch",
             repo: repo,
@@ -215,7 +218,8 @@ export function buildRefContextMenuItems(
     menu = [
       {
         title: `Checkout Branch${ELLIPSIS}`,
-        onClick: () => checkoutBranchAction(repo, sourceElem, refName, isRemoteCombined)
+        recentActionId: "ref.checkoutBranch",
+        onClick: () => checkoutBranchAction(repo, sourceElem, refName, isRemoteCombined, true)
       },
       buildMergeBranchMenuItem(repo, refName),
       null,
@@ -259,7 +263,9 @@ export function buildRefContextMenuItems(
         : [
             {
               title: "Open in New Window",
+              recentActionId: "ref.openWorktreeInNewWindow",
               onClick: () => {
+                recordRecentAction(repo, "ref.openWorktreeInNewWindow");
                 sendMessage({
                   command: "openWorktreeInNewWindow",
                   repo: repo,
@@ -269,7 +275,9 @@ export function buildRefContextMenuItems(
             },
             {
               title: "Reveal in File Manager",
+              recentActionId: "ref.revealWorktreeInOS",
               onClick: () => {
+                recordRecentAction(repo, "ref.revealWorktreeInOS");
                 sendMessage({
                   command: "revealWorktreeInOS",
                   repo: repo,
@@ -279,7 +287,9 @@ export function buildRefContextMenuItems(
             },
             {
               title: "Open Terminal Here",
+              recentActionId: "ref.openTerminal",
               onClick: () => {
+                recordRecentAction(repo, "ref.openTerminal");
                 sendMessage({
                   command: "openTerminal",
                   repo: repo,
@@ -304,6 +314,7 @@ export function buildRefContextMenuItems(
       worktreeInfo === null || worktreeInfo === undefined
         ? {
             title: `Create Worktree${ELLIPSIS}`,
+            recentActionId: "ref.createWorktree",
             onClick: () => {
               const repoName = getRepoName(repo);
               const defaultPath = `../${repoName}-${sanitizeBranchNameForPath(refName)}`;
@@ -324,6 +335,7 @@ export function buildRefContextMenuItems(
                 ],
                 "Create Worktree",
                 (values) => {
+                  recordRecentAction(repo, "ref.createWorktree");
                   sendMessage({
                     command: "createWorktree",
                     repo: repo,
@@ -394,10 +406,12 @@ export function buildRefContextMenuItems(
       const baseMenu: ContextMenuElement[] = [
         {
           title: "Pull",
+          recentActionId: "ref.pull",
           onClick: () => {
             showConfirmationDialog(
               `Are you sure you want to pull into <b><i>${escapeHtml(refName)}</i></b>?`,
               () => {
+                recordRecentAction(repo, "ref.pull");
                 sendMessage({ command: "pull", repo: repo });
               },
               null
@@ -406,10 +420,12 @@ export function buildRefContextMenuItems(
         },
         {
           title: "Push",
+          recentActionId: "ref.push",
           onClick: () => {
             showConfirmationDialog(
               `Are you sure you want to push <b><i>${escapeHtml(refName)}</i></b>?`,
               () => {
+                recordRecentAction(repo, "ref.push");
                 sendMessage({ command: "push", repo: repo });
               },
               null
@@ -432,7 +448,8 @@ export function buildRefContextMenuItems(
       const localBaseMenu: ContextMenuElement[] = [
         {
           title: "Checkout Branch",
-          onClick: () => checkoutBranchAction(repo, sourceElem, refName)
+          recentActionId: "ref.checkoutBranch",
+          onClick: () => checkoutBranchAction(repo, sourceElem, refName, undefined, true)
         },
         buildMergeBranchMenuItem(repo, refName),
         rebaseBranchItem
@@ -477,9 +494,13 @@ export function checkoutBranchAction(
   repo: string,
   sourceElem: HTMLElement,
   refName: string,
-  isRemoteCombined?: boolean
+  isRemoteCombined?: boolean,
+  recordAction = false
 ) {
   if (!isRemoteCombined && sourceElem.classList.contains("head")) {
+    if (recordAction) {
+      recordRecentAction(repo, "ref.checkoutBranch");
+    }
     sendMessage({
       command: "checkoutBranch",
       repo: repo,
@@ -494,6 +515,9 @@ export function checkoutBranchAction(
       defaultBranchName,
       "Checkout Branch",
       (newBranch) => {
+        if (recordAction) {
+          recordRecentAction(repo, "ref.checkoutBranch");
+        }
         sendMessage({
           command: "checkoutBranch",
           repo: repo,

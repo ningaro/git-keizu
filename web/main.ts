@@ -278,6 +278,7 @@ class GitKeizuView {
 
   /* Loading Data */
   public loadRepos(repos: GG.GitRepoSet, lastActiveRepo: string | null) {
+    viewState.repos = repos;
     this.gitRepos = repos;
     this.saveState();
 
@@ -320,6 +321,10 @@ class GitKeizuView {
     });
     this.repoDropdown.setOptions(options, this.currentRepo);
     this.refresh(true);
+  }
+
+  private getCurrentRepoRecentActions(): GG.RecentActionId[] {
+    return this.gitRepos[this.currentRepo]?.recentActions ?? [];
   }
 
   public loadBranches(
@@ -748,7 +753,8 @@ class GitKeizuView {
         showContextMenu(
           <MouseEvent>e,
           buildStashContextMenuItems(this.currentRepo, hash, selector, sourceElem),
-          sourceElem
+          sourceElem,
+          this.getCurrentRepoRecentActions()
         );
         return;
       }
@@ -762,7 +768,8 @@ class GitKeizuView {
           this.commitLookup,
           sourceElem
         ),
-        sourceElem
+        sourceElem,
+        this.getCurrentRepoRecentActions()
       );
     });
     addListenerToClass("commit", "click", (e: Event) => {
@@ -844,7 +851,8 @@ class GitKeizuView {
       showContextMenu(
         <MouseEvent>e,
         buildUncommittedContextMenuItems(this.currentRepo, sourceElem),
-        sourceElem
+        sourceElem,
+        this.getCurrentRepoRecentActions()
       );
     });
     addListenerToClass("gitRef", "contextmenu", (e: Event) => {
@@ -876,7 +884,8 @@ class GitKeizuView {
           remotes,
           worktreeInfo
         ),
-        sourceElem
+        sourceElem,
+        this.getCurrentRepoRecentActions()
       );
     });
     addListenerToClass("gitRef", "click", (e: Event) => e.stopPropagation());
@@ -1039,7 +1048,7 @@ class GitKeizuView {
           this.requestLoadCommits(true, () => {});
         }
       }));
-      showContextMenu(e, items, colHeadersElem);
+      showContextMenu(e, items, colHeadersElem, this.getCurrentRepoRecentActions());
     });
   }
 
@@ -1585,7 +1594,7 @@ class GitKeizuView {
       if (sourceElem === null) return;
       const items = buildFileContextMenuItems(sourceElem, this.expandedCommit, this.currentRepo);
       if (items.length === 0) return;
-      showContextMenu(<MouseEvent>e, items, sourceElem);
+      showContextMenu(<MouseEvent>e, items, sourceElem, this.getCurrentRepoRecentActions());
     });
     addListenerToClass("gitFile", "click", (e) => {
       let sourceElem = <HTMLElement>(<Element>e.target).closest(".gitFile")!;

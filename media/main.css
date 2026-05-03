@@ -562,6 +562,22 @@ body.unableToLoad p {
   background-color: var(--vscode-menu-selectionBackground);
   color: var(--vscode-menu-selectionForeground);
 }
+#contextMenu li.contextMenuLabel,
+ul.contextMenuSubmenu li.contextMenuLabel {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 20px 2px;
+  color: var(--vscode-descriptionForeground, var(--vscode-menu-foreground));
+  font-size: 11px;
+  line-height: 1.2;
+  opacity: 0.85;
+  user-select: none;
+}
+#contextMenu li.contextMenuLabel .codicon,
+ul.contextMenuSubmenu li.contextMenuLabel .codicon {
+  font-size: 12px;
+}
 #contextMenu li.contextMenuDivider {
   margin: 4px 10px;
   border-top: 1px solid var(--vscode-menu-separatorBackground);

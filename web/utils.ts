@@ -18,6 +18,7 @@ export const svgIcons = {
   fetch: '<span class="codicon codicon-git-fetch"></span>',
   file: '<span class="codicon codicon-file"></span>',
   goToFile: '<span class="codicon codicon-go-to-file"></span>',
+  history: '<span class="codicon codicon-history"></span>',
   info: '<span class="codicon codicon-info"></span>',
   listView: '<span class="codicon codicon-list-flat"></span>',
   loading: '<span class="codicon codicon-loading codicon-modifier-spin"></span>',

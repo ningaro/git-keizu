@@ -25,6 +25,7 @@ declare global {
   interface ContextMenuItem {
     title: string;
     onClick: () => void;
+    recentActionId?: GG.RecentActionId;
   }
 
   interface ContextMenuSubmenu {
@@ -32,7 +33,13 @@ declare global {
     submenu: ContextMenuElement[];
   }
 
-  type ContextMenuElement = ContextMenuItem | ContextMenuSubmenu | null;
+  interface ContextMenuLabel {
+    kind: "label";
+    title: string;
+    icon?: string;
+  }
+
+  type ContextMenuElement = ContextMenuItem | ContextMenuSubmenu | ContextMenuLabel | null;
 
   interface DialogTextInput {
     type: "text";

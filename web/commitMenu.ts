@@ -1,4 +1,5 @@
 import type { GitCommitNode, GitResetMode } from "../src/types";
+import { recordRecentAction } from "./contextMenu";
 import { showConfirmationDialog, showFormDialog, showSelectDialog } from "./dialogs";
 import {
   abbrevCommit,
@@ -18,6 +19,7 @@ export function buildCommitContextMenuItems(
 ): ContextMenuElement[] {
   const addTagItem: ContextMenuItem = {
     title: `Add Tag${ELLIPSIS}`,
+    recentActionId: "commit.addTag",
     onClick: () => {
       showFormDialog(
         `Add tag to commit <b><i>${abbrevCommit(hash)}</i></b>:`,
@@ -41,6 +43,7 @@ export function buildCommitContextMenuItems(
         ],
         "Add Tag",
         (values) => {
+          recordRecentAction(repo, "commit.addTag");
           sendMessage({
             command: "addTag",
             repo: repo,
@@ -56,6 +59,7 @@ export function buildCommitContextMenuItems(
   };
   const createBranchItem: ContextMenuItem = {
     title: `Create Branch${ELLIPSIS}`,
+    recentActionId: "commit.createBranch",
     onClick: () => {
       showFormDialog(
         `Enter the name of the branch you would like to create from commit <b><i>${abbrevCommit(hash)}</i></b>:`,
@@ -65,6 +69,7 @@ export function buildCommitContextMenuItems(
         ],
         "Create Branch",
         (values) => {
+          recordRecentAction(repo, "commit.createBranch");
           sendMessage({
             command: "createBranch",
             repo: repo,
@@ -79,6 +84,7 @@ export function buildCommitContextMenuItems(
   };
   const createWorktreeItem: ContextMenuItem = {
     title: `Create Worktree Here${ELLIPSIS}`,
+    recentActionId: "commit.createWorktree",
     onClick: () => {
       const repoName = getRepoName(repo);
       const pathPrefix = `../${repoName}-`;
@@ -95,6 +101,7 @@ export function buildCommitContextMenuItems(
         ],
         "Create Worktree",
         (values) => {
+          recordRecentAction(repo, "commit.createWorktree");
           sendMessage({
             command: "createWorktree",
             repo: repo,
@@ -139,6 +146,7 @@ export function buildCommitContextMenuItems(
   };
   const cherryPickItem: ContextMenuItem = {
     title: `Cherry Pick${ELLIPSIS}`,
+    recentActionId: "commit.cherryPick",
     onClick: () => {
       const cherryPickCheckboxes: DialogCheckboxInput[] = [
         {
@@ -160,6 +168,7 @@ export function buildCommitContextMenuItems(
           cherryPickCheckboxes,
           "Yes, cherry pick commit",
           (values) => {
+            recordRecentAction(repo, "commit.cherryPick");
             sendMessage({
               command: "cherrypickCommit",
               repo: repo,
@@ -193,6 +202,7 @@ export function buildCommitContextMenuItems(
           ],
           "Yes, cherry pick commit",
           (values) => {
+            recordRecentAction(repo, "commit.cherryPick");
             sendMessage({
               command: "cherrypickCommit",
               repo: repo,
@@ -252,6 +262,7 @@ export function buildCommitContextMenuItems(
   };
   const mergeItem: ContextMenuItem = {
     title: `Merge into current branch${ELLIPSIS}`,
+    recentActionId: "commit.merge",
     onClick: () => {
       const noFfDefault = viewState.dialogDefaults.merge.noFastForward;
       showFormDialog(
@@ -277,6 +288,7 @@ export function buildCommitContextMenuItems(
         ],
         "Yes, merge",
         (values) => {
+          recordRecentAction(repo, "commit.merge");
           sendMessage({
             command: "mergeCommit",
             repo: repo,
