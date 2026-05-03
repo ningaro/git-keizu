@@ -11,11 +11,11 @@
 
 ## Shards
 
-| Shard File                | Responsibility   | Sections | Cases | Last Updated |
-| ------------------------- | ---------------- | -------- | ----- | ------------ |
-| 01-message-routing-01.md  | message-routing  | 9        | 30    | 2026-05-02   |
-| 02-state-lifecycle-01.md  | state-lifecycle  | 6        | 18    | 2026-05-02   |
-| 03-worktree-actions-01.md | worktree-actions | 3        | 16    | 2026-05-02   |
+| Shard File                           | Responsibility              | Sections | Cases | Last Updated |
+| ------------------------------------ | --------------------------- | -------- | ----- | ------------ |
+| 01-message-routing-01.md             | message-routing             | 9        | 30    | 2026-05-02   |
+| 02-state-lifecycle-01.md             | state-lifecycle             | 6        | 18    | 2026-05-02   |
+| 03-worktree-actions-01.md            | worktree-actions            | 3        | 16    | 2026-05-02   |
 | 04-context-menu-recent-actions-01.md | context-menu-recent-actions | 1        | 1     | 2026-05-02   |
 
 ## Origin Coverage

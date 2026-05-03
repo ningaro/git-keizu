@@ -198,7 +198,12 @@ function buildItemsWithRecentActions(
     return items;
   }
 
-  return [{ kind: "label", title: "Recent", icon: svgIcons.history }, ...recentItems, null, ...items];
+  return [
+    { kind: "label", title: "Recent", icon: svgIcons.history },
+    ...recentItems,
+    null,
+    ...items
+  ];
 }
 
 function addSubmenuElements(items: ContextMenuElement[]): void {

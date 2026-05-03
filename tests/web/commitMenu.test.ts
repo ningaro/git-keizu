@@ -979,7 +979,14 @@ describe("Commit recent action metadata (S8)", () => {
   it("assigns recentActionId to the supported top-level actions (TC-039)", () => {
     // Case: TC-039
     // Given: a regular commit menu
-    const items = buildCommitContextMenuItems(REPO, HASH, PARENT_HASHES, [], {}, createMockElement());
+    const items = buildCommitContextMenuItems(
+      REPO,
+      HASH,
+      PARENT_HASHES,
+      [],
+      {},
+      createMockElement()
+    );
 
     // When: supported top-level actions are inspected
 
@@ -1001,7 +1008,14 @@ describe("Commit recent action metadata (S8)", () => {
   it("assigns recentActionId only to Add Tag inside the More submenu (TC-040)", () => {
     // Case: TC-040
     // Given: a regular commit menu
-    const items = buildCommitContextMenuItems(REPO, HASH, PARENT_HASHES, [], {}, createMockElement());
+    const items = buildCommitContextMenuItems(
+      REPO,
+      HASH,
+      PARENT_HASHES,
+      [],
+      {},
+      createMockElement()
+    );
 
     // When: submenu actions are inspected
     const addTagItem = findSubmenuItem(items, "Add Tag&#8230;");
@@ -1043,7 +1057,14 @@ describe("Commit recent action metadata (S8)", () => {
   it("does not record a recent action until the Add Tag dialog is submitted (TC-042)", () => {
     // Case: TC-042
     // Given: the Add Tag dialog is opened from the submenu
-    const items = buildCommitContextMenuItems(REPO, HASH, PARENT_HASHES, [], {}, createMockElement());
+    const items = buildCommitContextMenuItems(
+      REPO,
+      HASH,
+      PARENT_HASHES,
+      [],
+      {},
+      createMockElement()
+    );
     const addTagItem = findSubmenuItem(items, "Add Tag&#8230;");
 
     // When: the menu item is clicked but the submit callback is not invoked

@@ -15,6 +15,6 @@
 > Signature: `private getHtmlForWebview()`
 > Target Path: `src/gitGraphView.ts`
 
-| Case ID | Input / Precondition         | Perspective (Normal / Validation / Exception / External / Boundary / Type) | Expected Result                                                               | Notes                |
-| ------- | ---------------------------- | -------------------------------------------------------------------------- | ----------------------------------------------------------------------------- | -------------------- |
+| Case ID | Input / Precondition           | Perspective (Normal / Validation / Exception / External / Boundary / Type) | Expected Result                                                                                         | Notes                |
+| ------- | ------------------------------ | -------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------- | -------------------- |
 | TC-065  | `getHtmlForWebview()` 呼び出し | Normal - standard                                                          | 生成 HTML 内の `viewState.showRecentActions` が `Config.showRecentActions()` の返却値 `true` と一致する | 設定パイプライン検証 |

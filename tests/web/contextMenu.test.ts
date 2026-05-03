@@ -568,12 +568,10 @@ describe("showContextMenu recent actions (S3)", () => {
     ];
 
     // When: showContextMenu is called with recentActions
-    showContextMenu(
-      createMouseEvent(100, 100),
-      items,
-      sourceElem,
-      ["commit.merge", "commit.createBranch"]
-    );
+    showContextMenu(createMouseEvent(100, 100), items, sourceElem, [
+      "commit.merge",
+      "commit.createBranch"
+    ]);
 
     // Then: the menu renders only the original items without a prepended divider block
     expect(getRenderedMenuSnapshot()).toEqual([
@@ -597,12 +595,10 @@ describe("showContextMenu recent actions (S3)", () => {
     ];
 
     // When: showContextMenu is called with recentActions ordered by recency
-    showContextMenu(
-      createMouseEvent(100, 100),
-      items,
-      sourceElem,
-      ["commit.merge", "commit.createBranch"]
-    );
+    showContextMenu(createMouseEvent(100, 100), items, sourceElem, [
+      "commit.merge",
+      "commit.createBranch"
+    ]);
 
     // Then: matching recent items are prepended before a divider and the normal menu remains intact
     expect(getRenderedMenuSnapshot()).toEqual([
@@ -660,12 +656,10 @@ describe("showContextMenu recent actions (S3)", () => {
     ];
 
     // When: showContextMenu is called with a submenu action in recent history
-    showContextMenu(
-      createMouseEvent(100, 100),
-      items,
-      sourceElem,
-      ["commit.addTag", "commit.createBranch"]
-    );
+    showContextMenu(createMouseEvent(100, 100), items, sourceElem, [
+      "commit.addTag",
+      "commit.createBranch"
+    ]);
 
     // Then: the recent block contains the submenu item while the original submenu still exists
     expect(getRenderedMenuSnapshot()).toEqual([
