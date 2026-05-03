@@ -32,13 +32,13 @@ vi.mock("../../web/utils", () => {
   };
 });
 
+import { recordRecentAction } from "../../web/contextMenu";
 import {
   showCheckboxDialog,
   showConfirmationDialog,
   showFormDialog,
   showRefInputDialog
 } from "../../web/dialogs";
-import { recordRecentAction } from "../../web/contextMenu";
 import { buildRefContextMenuItems, checkoutBranchAction, parseRemoteRef } from "../../web/refMenu";
 import { getRepoName, sanitizeBranchNameForPath, sendMessage } from "../../web/utils";
 

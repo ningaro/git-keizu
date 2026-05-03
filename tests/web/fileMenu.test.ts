@@ -5,8 +5,8 @@ vi.mock("../../web/contextMenu", () => ({
   recordRecentAction: vi.fn()
 }));
 
-import { buildFileContextMenuItems, resolveFileRow, sendOpenFileAction } from "../../web/fileMenu";
 import { recordRecentAction } from "../../web/contextMenu";
+import { buildFileContextMenuItems, resolveFileRow, sendOpenFileAction } from "../../web/fileMenu";
 import { vscode } from "../../web/utils";
 
 /* ------------------------------------------------------------------ */

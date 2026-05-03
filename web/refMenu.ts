@@ -1,3 +1,4 @@
+import { recordRecentAction } from "./contextMenu";
 import {
   showActionRunningDialog,
   showCheckboxDialog,
@@ -5,7 +6,6 @@ import {
   showFormDialog,
   showRefInputDialog
 } from "./dialogs";
-import { recordRecentAction } from "./contextMenu";
 import {
   ELLIPSIS,
   escapeHtml,
