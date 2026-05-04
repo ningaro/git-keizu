@@ -4,3 +4,16 @@ out
 *.vsix
 notes/*
 !notes/.gitkeep
+
+# Sandbox-injected dotfiles (Claude Code sandbox temporarily places these in the working directory)
+.bash_profile
+.bashrc
+.profile
+.zprofile
+.zshrc
+.gitconfig
+.gitmodules
+.ripgreprc
+.idea/
+.claude/
+.mcp.json
