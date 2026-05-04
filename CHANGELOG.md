@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.7.2] - 2026-05-04
+
+### Changed
+
+- **Reset to Commit now tracked in Recent actions**: "Reset current branch to this Commit" now appears in the Recent section of the commit context menu after it is used — making it one click away the next time you need to reset to the same commit. Previously, Reset was intentionally excluded from recent action tracking; it is now included alongside the other tracked commit actions.
+- **Extension metadata updated for Japanese UI discoverability**: The VS Code Marketplace and Open VSX description now mentions Japanese UI support; `japanese` and `日本語` keywords have been added so Japanese-speaking developers can find the extension more easily.
+
 ## [0.7.1] - 2026-05-04
 
 ### Fixed
@@ -345,7 +352,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 Initial release as Git Keizu — forked from [neo-git-graph](https://github.com/asispts/neo-git-graph) (originally [Git Graph](https://github.com/mhutchie/vscode-git-graph) by mhutchie, MIT).
 
-[Unreleased]: https://github.com/numlia/git-keizu/compare/v0.7.1...HEAD
+[Unreleased]: https://github.com/numlia/git-keizu/compare/v0.7.2...HEAD
+[0.7.2]: https://github.com/numlia/git-keizu/compare/v0.7.1...v0.7.2
 [0.7.1]: https://github.com/numlia/git-keizu/compare/v0.7.0...v0.7.1
 [0.7.0]: https://github.com/numlia/git-keizu/compare/v0.6.0...v0.7.0
 [0.6.0]: https://github.com/numlia/git-keizu/compare/v0.5.23...v0.6.0
