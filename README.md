@@ -15,6 +15,12 @@
 
 An actively maintained fork of [Git Graph](https://github.com/mhutchie/vscode-git-graph) (MIT, 2019), intentionally kept focused on the essentials. If the core graph experience is what you're after, this is for you.
 
+> **Japanese UI supported / 日本語UI対応**
+>
+> Set VS Code's display language to Japanese and the entire Git Keizu interface — commands, settings, menus, dialogs, error messages, and dates — switches to Japanese automatically. No extra configuration required.
+>
+> VS Codeの表示言語を日本語に設定するだけで、コマンド、設定項目、メニュー、ダイアログ、エラーメッセージ、日付表示まで含めて、Git Keizuのインターフェース全体が自動的に日本語へ切り替わります。追加の設定は不要です。
+
 ## Screenshots
 
 **Graph view** — all branches, tags, stashes, and uncommitted changes in one visual graph. Merge commits are dimmed by default to keep the important commits easy to spot:
@@ -41,6 +47,7 @@ An actively maintained fork of [Git Graph](https://github.com/mhutchie/vscode-gi
 ## Features
 
 - **Graph View**: See all your branches, tags, stash entries, and uncommitted changes in one visual graph. The menu bar and column headers stay fixed as you scroll, so controls are always within reach in long histories.
+- **Japanese UI (i18n) / 日本語UI**: When VS Code's display language is set to Japanese, the entire Git Keizu interface — commands, configuration descriptions, toolbar, context menus, dialogs, error messages, and relative/absolute date display — automatically switches to Japanese. Other locales fall back to English. The dictionary-based infrastructure (`l10n/` directory and `package.nls.ja.json`) supports adding further locales without code changes. VS Codeの表示言語が日本語のときは、コマンド・設定説明・ツールバー・コンテキストメニュー・ダイアログ・エラーメッセージ・相対/絶対日付表示まで、UI全体が自動的に日本語に切り替わります。
 - **Commit display order**: Choose how commits are sorted in the graph — Date (default, by committer date), Topological (same-branch commits appear consecutively), or Author Date. Set the global default in settings (`git-keizu.repository.commits.order`); override per repository via the table header right-click context menu. The current order is indicated with a checkmark.
 - **Muted merge commits**: Merge commits are shown with dimmed text (commit message, date, author, and hash) by default, making non-merge commits easier to spot in a busy history. Branch labels always render at full opacity regardless of mute state. Non-ancestor commits can also be muted via settings (`git-keizu.repository.commits.mute.*`).
 - **Author Filter**: A multi-select dropdown in the toolbar lets you filter commits by author — select one or more names to show only their commits, or choose "Show All" to clear the filter. The author list covers all authors reachable from HEAD (not just the currently loaded commits), so no one is missed even in long histories.
@@ -71,7 +78,6 @@ An actively maintained fork of [Git Graph](https://github.com/mhutchie/vscode-gi
 - **Dropdown overflow handling**: Long branch and repository names are truncated with an ellipsis; hover to see the full name in a tooltip
 - **Avatar Support**: Optionally fetch commit author avatars from GitHub, GitLab, or Gravatar
 - **Multi-Repository**: Support for multiple Git repositories in one workspace
-- **Japanese UI (i18n)**: When VS Code's display language is set to Japanese, the entire Git Keizu interface — commands, configuration descriptions, toolbar, context menus, dialogs, error messages, and relative/absolute date display — automatically switches to Japanese. Other locales fall back to English. The dictionary-based infrastructure (`l10n/` directory) supports adding further locales without code changes.
 - **Configurable**: Customize graph colors, style, date format, and more
 
 ## Extension Commands
