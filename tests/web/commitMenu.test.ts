@@ -1005,7 +1005,7 @@ describe("Commit recent action metadata (S8)", () => {
     );
   });
 
-  it("assigns recentActionId only to Add Tag inside the More submenu (TC-040)", () => {
+  it("assigns recentActionId to Add Tag and Reset inside the More submenu (TC-040)", () => {
     // Case: TC-040
     // Given: a regular commit menu
     const items = buildCommitContextMenuItems(
@@ -1023,11 +1023,11 @@ describe("Commit recent action metadata (S8)", () => {
     const revertItem = findSubmenuItem(items, "Revert&#8230;");
     const resetItem = findSubmenuItem(items, "Reset current branch to this Commit&#8230;");
 
-    // Then: only Add Tag is recent-enabled
+    // Then: Add Tag and Reset are recent-enabled, the rest are not
     expect(addTagItem.recentActionId).toBe("commit.addTag");
     expect(checkoutItem.recentActionId).toBeUndefined();
     expect(revertItem.recentActionId).toBeUndefined();
-    expect(resetItem.recentActionId).toBeUndefined();
+    expect(resetItem.recentActionId).toBe("commit.resetToCommit");
   });
 
   it("records the recent action before sending Create Branch on submit (TC-041)", () => {

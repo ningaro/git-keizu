@@ -66,6 +66,7 @@ export type RecentActionId =
   | "commit.createBranch"
   | "commit.createWorktree"
   | "commit.merge"
+  | "commit.resetToCommit"
   | "file.openFile"
   | "ref.checkoutBranch"
   | "ref.createWorktree"

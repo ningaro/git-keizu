@@ -348,6 +348,7 @@ export function buildCommitContextMenuItems(
   };
   const resetItem: ContextMenuItem = {
     title: `${t("Reset current branch to this Commit")}${ELLIPSIS}`,
+    recentActionId: "commit.resetToCommit",
     onClick: () => {
       showSelectDialog(
         t(
@@ -363,6 +364,7 @@ export function buildCommitContextMenuItems(
         ],
         t("Yes, reset"),
         (mode) => {
+          recordRecentAction(repo, "commit.resetToCommit");
           sendMessage({
             command: "resetToCommit",
             repo: repo,
