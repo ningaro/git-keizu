@@ -556,7 +556,8 @@ body.unableToLoad p {
   cursor: default;
 }
 #contextMenu li.contextMenuItem {
-  padding: 6px 20px;
+  padding: 0 20px;
+  line-height: 28px;
 }
 #contextMenu li.contextMenuItem:hover {
   background-color: var(--vscode-menu-selectionBackground);
@@ -613,7 +614,8 @@ ul.contextMenuSubmenu li {
   cursor: default;
 }
 ul.contextMenuSubmenu li.contextMenuItem {
-  padding: 6px 20px;
+  padding: 0 20px;
+  line-height: 28px;
 }
 ul.contextMenuSubmenu li.contextMenuItem:hover {
   background-color: var(--vscode-menu-selectionBackground);
