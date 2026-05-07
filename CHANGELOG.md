@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.7.4] - 2026-05-07
+
+### Changed
+
+- **Extension marketplace description shortened**: The VS Code Marketplace and Open VSX description has been trimmed to a concise single line, making the extension easier to scan in search results.
+
 ## [0.7.3] - 2026-05-05
 
 ### Fixed
@@ -358,7 +364,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 Initial release as Git Keizu — forked from [neo-git-graph](https://github.com/asispts/neo-git-graph) (originally [Git Graph](https://github.com/mhutchie/vscode-git-graph) by mhutchie, MIT).
 
-[Unreleased]: https://github.com/numlia/git-keizu/compare/v0.7.3...HEAD
+[Unreleased]: https://github.com/numlia/git-keizu/compare/v0.7.4...HEAD
+[0.7.4]: https://github.com/numlia/git-keizu/compare/v0.7.3...v0.7.4
 [0.7.3]: https://github.com/numlia/git-keizu/compare/v0.7.2...v0.7.3
 [0.7.2]: https://github.com/numlia/git-keizu/compare/v0.7.1...v0.7.2
 [0.7.1]: https://github.com/numlia/git-keizu/compare/v0.7.0...v0.7.1
