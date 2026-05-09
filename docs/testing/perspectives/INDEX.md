@@ -1,10 +1,10 @@
 # テスト観点表インデックス
 
-> Auto-generated: 2026-05-03T00:00:00Z
+> Auto-generated: 2026-05-09T00:00:00Z
 > Total sources: 31
 > Total physical files: 41
-> Total sections: 274
-> Total cases: 1314
+> Total sections: 275
+> Total cases: 1323
 
 ## ソースファイル → 観点表（正引き）
 
@@ -37,7 +37,7 @@
 | web/i18n.ts            | single-file  | web/i18n-test.md               | 1      | 1        | 5     | 2026-05-03   |
 | web/main.ts            | sharded      | web/main-test/INDEX.md         | 6      | 37       | 213   | 2026-04-04   |
 | web/messageHandler.ts  | single-file  | web/messageHandler-test.md     | 1      | 8        | 25    | 2026-04-04   |
-| web/refMenu.ts         | single-file  | web/refMenu-test.md            | 1      | 12       | 63    | 2026-05-02   |
+| web/refMenu.ts         | single-file  | web/refMenu-test.md            | 1      | 13       | 72    | 2026-05-09   |
 | web/stashMenu.ts       | single-file  | web/stashMenu-test.md          | 1      | 8        | 30    | 2026-04-30   |
 | web/uncommittedMenu.ts | single-file  | web/uncommittedMenu-test.md    | 1      | 1        | 3     | 2026-03-09   |
 | web/utils.ts           | single-file  | web/utils-test.md              | 1      | 4        | 19    | 2026-03-27   |
@@ -88,6 +88,7 @@
 | Feature 033 (watch-refresh-scope) Task 3                              | src/gitGraphView-test/INDEX.md                                                                                                                                                                                 |
 | Feature 034 (context-menu-recent-actions) Task 1-4                    | src/config-test.md, src/extensionState-test.md, src/gitGraphView-test/INDEX.md, web/commitMenu-test.md, web/contextMenu-test.md, web/fileMenu-test.md, web/refMenu-test.md                                     |
 | Feature 035 (japanese-ui-i18n) Task 8                                 | src/i18n-test.md, web/i18n-test.md, web/dates-test.md                                                                                                                                                          |
+| Feature 037 (delete-branch-recent-actions) Task 4                     | web/refMenu-test.md                                                                                                                                                                                            |
 | test-plan                                                             | web/stashMenu-test.md                                                                                                                                                                                          |
 | test-plan (既存コード分析)                                            | src/avatarManager-test.md, src/diffDocProvider-test.md, src/extension-test.md, src/extensionState-test.md, src/repoFileWatcher-test.md, src/statusBarItem-test.md, web/branchLabels-test.md, web/dates-test.md |
 | test-plan (既存コード網羅)                                            | src/repoManager-test.md                                                                                                                                                                                        |
