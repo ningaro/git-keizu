@@ -1528,7 +1528,7 @@ describe("Ref recent action metadata (S14)", () => {
     // Then: supported actions expose ids and non-target actions stay undefined
     expect(remoteCheckout?.recentActionId).toBe("ref.checkoutBranch");
     expect(remoteMerge?.recentActionId).toBe("ref.mergeBranch");
-    expect(deleteRemote?.recentActionId).toBeUndefined();
+    expect(deleteRemote?.recentActionId).toBe("ref.deleteRemoteBranch");
     expect(pullItem?.recentActionId).toBe("ref.pull");
     expect(pushItem?.recentActionId).toBe("ref.push");
     expect(openWindow?.recentActionId).toBe("ref.openWorktreeInNewWindow");
@@ -1624,4 +1624,203 @@ describe("Ref recent action metadata (S14)", () => {
       vi.mocked(sendMessage).mock.invocationCallOrder[0]
     );
   });
+});
+
+// --- S15: Delete Branch / Delete Remote Branch の Recent actions 連携 ---
+
+describe("buildRefContextMenuItems Delete Branch recent actions (S15)", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    (globalThis as Record<string, unknown>).viewState = {
+      dialogDefaults: {
+        merge: { noFastForward: true, squashCommits: false, noCommit: false },
+        cherryPick: { recordOrigin: false, noCommit: false },
+        stashUncommittedChanges: { includeUntracked: false },
+        createWorktree: { openTerminal: true },
+        removeWorktree: { deleteBranch: true }
+      }
+    };
+  });
+
+  it("assigns recentActionId 'ref.deleteBranch' to the Delete Branch item (TC-070)", () => {
+    // Case: TC-070
+    // Given: a non-HEAD local branch menu (Delete Branch lives in More submenu)
+    const sourceElem = createMockElement(["head"]);
+    const menu = buildRefContextMenuItems(REPO, "feature/x", sourceElem, false, "main", ["origin"]);
+
+    // When: the Delete Branch... submenu item is located
+    const deleteItem = findMenuItem(menu, "Delete Branch&#8230;");
+
+    // Then: recentActionId is "ref.deleteBranch"
+    expect(deleteItem).toBeDefined();
+    expect(deleteItem?.recentActionId).toBe("ref.deleteBranch");
+  });
+
+  it("records ref.deleteBranch before sendMessage in remotes-present branch (TC-072)", () => {
+    // Case: TC-072
+    // Given: a non-HEAD local branch with remotes; Delete Branch dialog displayed
+    const sourceElem = createMockElement(["head"]);
+    const menu = buildRefContextMenuItems(REPO, "feature/x", sourceElem, false, "main", ["origin"]);
+    const deleteItem = findMenuItem(menu, "Delete Branch&#8230;");
+    deleteItem!.onClick();
+
+    // When: form dialog callback is invoked (form confirmed)
+    const callback = vi.mocked(showFormDialog).mock.calls[0][3];
+    callback(["checked", "checked"]);
+
+    // Then: recordRecentAction("ref.deleteBranch") fires before sendMessage(deleteBranch)
+    expect(recordRecentAction).toHaveBeenCalledWith(REPO, "ref.deleteBranch");
+    expect(sendMessage).toHaveBeenCalledWith({
+      command: "deleteBranch",
+      repo: REPO,
+      branchName: "feature/x",
+      forceDelete: true,
+      deleteOnRemotes: ["origin"]
+    });
+    expect(vi.mocked(recordRecentAction).mock.invocationCallOrder[0]).toBeLessThan(
+      vi.mocked(sendMessage).mock.invocationCallOrder[0]
+    );
+  });
+
+  it("records ref.deleteBranch before sendMessage in remotes-empty branch (TC-073)", () => {
+    // Case: TC-073
+    // Given: a non-HEAD local branch without remotes; Delete Branch dialog displayed
+    const sourceElem = createMockElement(["head"]);
+    const menu = buildRefContextMenuItems(REPO, "feature/x", sourceElem, false, "main", []);
+    const deleteItem = findMenuItem(menu, "Delete Branch&#8230;");
+    deleteItem!.onClick();
+
+    // When: checkbox dialog callback is invoked (force delete confirmed)
+    const callback = vi.mocked(showCheckboxDialog).mock.calls[0][4];
+    callback(true);
+
+    // Then: recordRecentAction("ref.deleteBranch") fires before sendMessage(deleteBranch)
+    expect(recordRecentAction).toHaveBeenCalledWith(REPO, "ref.deleteBranch");
+    expect(sendMessage).toHaveBeenCalledWith({
+      command: "deleteBranch",
+      repo: REPO,
+      branchName: "feature/x",
+      forceDelete: true,
+      deleteOnRemotes: []
+    });
+    expect(vi.mocked(recordRecentAction).mock.invocationCallOrder[0]).toBeLessThan(
+      vi.mocked(sendMessage).mock.invocationCallOrder[0]
+    );
+  });
+
+  it("does not record or send when Delete Branch dialog is cancelled (TC-075)", () => {
+    // Case: TC-075
+    // Given: Delete Branch dialog is shown (no callback invocation simulates cancel)
+    const sourceElem = createMockElement(["head"]);
+    const menu = buildRefContextMenuItems(REPO, "feature/x", sourceElem, false, "main", ["origin"]);
+    const deleteItem = findMenuItem(menu, "Delete Branch&#8230;");
+
+    // When: the user cancels (form dialog callback is never invoked)
+    deleteItem!.onClick();
+
+    // Then: neither recordRecentAction nor sendMessage is called
+    expect(showFormDialog).toHaveBeenCalledTimes(1);
+    expect(recordRecentAction).not.toHaveBeenCalled();
+    expect(sendMessage).not.toHaveBeenCalled();
+  });
+});
+
+describe("buildRefContextMenuItems Delete Remote Branch recent actions (S15)", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    (globalThis as Record<string, unknown>).viewState = {
+      dialogDefaults: {
+        merge: { noFastForward: true, squashCommits: false, noCommit: false },
+        cherryPick: { recordOrigin: false, noCommit: false },
+        stashUncommittedChanges: { includeUntracked: false },
+        createWorktree: { openTerminal: true },
+        removeWorktree: { deleteBranch: true }
+      }
+    };
+  });
+
+  it("assigns recentActionId 'ref.deleteRemoteBranch' to the Delete Remote Branch item (TC-071)", () => {
+    // Case: TC-071
+    // Given: a remote branch menu (Delete Remote Branch lives in More submenu)
+    const sourceElem = createMockElement(["remote"]);
+    const menu = buildRefContextMenuItems(REPO, "origin/feature", sourceElem, false, "main");
+
+    // When: the Delete Remote Branch... submenu item is located
+    const deleteRemote = findMenuItem(menu, "Delete Remote Branch&#8230;");
+
+    // Then: recentActionId is "ref.deleteRemoteBranch"
+    expect(deleteRemote).toBeDefined();
+    expect(deleteRemote?.recentActionId).toBe("ref.deleteRemoteBranch");
+  });
+
+  it("records ref.deleteRemoteBranch before sendMessage on confirm (TC-074)", () => {
+    // Case: TC-074
+    // Given: a remote branch menu; Delete Remote Branch confirm dialog is displayed
+    const sourceElem = createMockElement(["remote"]);
+    const menu = buildRefContextMenuItems(REPO, "origin/feature", sourceElem, false, "main");
+    const deleteRemote = findMenuItem(menu, "Delete Remote Branch&#8230;");
+    deleteRemote!.onClick();
+
+    // When: confirmation dialog is accepted
+    const confirmed = vi.mocked(showConfirmationDialog).mock.calls[0][1];
+    confirmed();
+
+    // Then: recordRecentAction("ref.deleteRemoteBranch") fires before sendMessage(deleteRemoteBranch)
+    expect(recordRecentAction).toHaveBeenCalledWith(REPO, "ref.deleteRemoteBranch");
+    expect(sendMessage).toHaveBeenCalledWith({
+      command: "deleteRemoteBranch",
+      repo: REPO,
+      remoteName: "origin",
+      branchName: "feature"
+    });
+    expect(vi.mocked(recordRecentAction).mock.invocationCallOrder[0]).toBeLessThan(
+      vi.mocked(sendMessage).mock.invocationCallOrder[0]
+    );
+  });
+
+  it("does not record or send when Delete Remote Branch confirm is cancelled (TC-076)", () => {
+    // Case: TC-076
+    // Given: Delete Remote Branch confirm dialog is shown (no callback invocation simulates cancel)
+    const sourceElem = createMockElement(["remote"]);
+    const menu = buildRefContextMenuItems(REPO, "origin/feature", sourceElem, false, "main");
+    const deleteRemote = findMenuItem(menu, "Delete Remote Branch&#8230;");
+
+    // When: the user cancels (confirm callback is never invoked)
+    deleteRemote!.onClick();
+
+    // Then: neither recordRecentAction nor sendMessage is called
+    expect(showConfirmationDialog).toHaveBeenCalledTimes(1);
+    expect(recordRecentAction).not.toHaveBeenCalled();
+    expect(sendMessage).not.toHaveBeenCalled();
+  });
+});
+
+describe("buildRefContextMenuItems tag menu recent actions exclusion (S15)", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  it("does not assign recentActionId to Delete Tag / Push Tag items (TC-077)", () => {
+    // Case: TC-077
+    // Given: a tag context menu
+    const menu = buildRefContextMenuItems(
+      REPO,
+      "v1.0.0",
+      createMockElement(["tag"]),
+      false,
+      "main"
+    );
+
+    // When: tag-only items are inspected
+    const deleteTag = findMenuItem(menu, "Delete Tag&#8230;");
+    const pushTag = findMenuItem(menu, "Push Tag&#8230;");
+
+    // Then: tag-only actions remain unassigned (TC-066 と整合)
+    expect(deleteTag?.recentActionId).toBeUndefined();
+    expect(pushTag?.recentActionId).toBeUndefined();
+  });
+
+  // TC-078 (Type - union extension): "ref.deleteBranch" / "ref.deleteRemoteBranch" を
+  // GG.RecentActionId として渡せることは、本ファイル内の recordRecentAction 呼び出し箇所
+  // (TC-072 / TC-073 / TC-074) が `pnpm run typecheck` を通過することで担保される。
 });
