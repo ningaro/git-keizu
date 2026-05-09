@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.7.5] - 2026-05-09
+
+### Changed
+
+- **Delete Branch and Delete Remote Branch now tracked in Recent actions**: Right-clicking a local branch and choosing "Delete Branch..." or a remote branch and choosing "Delete Remote Branch..." now records the action in the "Recent" section of the context menu — making frequently used delete operations one click away the next time. The action is recorded only after the confirmation dialog is accepted, so cancelling never pollutes the Recent list.
+
 ## [0.7.4] - 2026-05-07
 
 ### Changed
@@ -364,7 +370,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 Initial release as Git Keizu — forked from [neo-git-graph](https://github.com/asispts/neo-git-graph) (originally [Git Graph](https://github.com/mhutchie/vscode-git-graph) by mhutchie, MIT).
 
-[Unreleased]: https://github.com/numlia/git-keizu/compare/v0.7.4...HEAD
+[Unreleased]: https://github.com/numlia/git-keizu/compare/v0.7.5...HEAD
+[0.7.5]: https://github.com/numlia/git-keizu/compare/v0.7.4...v0.7.5
 [0.7.4]: https://github.com/numlia/git-keizu/compare/v0.7.3...v0.7.4
 [0.7.3]: https://github.com/numlia/git-keizu/compare/v0.7.2...v0.7.3
 [0.7.2]: https://github.com/numlia/git-keizu/compare/v0.7.1...v0.7.2
