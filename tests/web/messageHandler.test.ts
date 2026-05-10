@@ -23,7 +23,8 @@ function createMockGitKeizuView(): GitKeizuViewAPI {
     loadCommits: vi.fn(),
     loadRepos: vi.fn(),
     refresh: vi.fn(),
-    selectRepo: vi.fn()
+    selectRepo: vi.fn(),
+    setShowRecentActions: vi.fn()
   };
 }
 
@@ -466,5 +467,49 @@ describe("handleMessage openFile response (S8)", () => {
     expect(showErrorDialog).toHaveBeenCalledTimes(1);
     expect(showErrorDialog).toHaveBeenCalledWith("Unable to open file", errorMessage, null);
     expect(gitKeizu.refresh).not.toHaveBeenCalled();
+  });
+});
+
+// S9: setShowRecentActions レスポンスハンドラ
+describe("handleMessage setShowRecentActions response (S9)", () => {
+  let gitKeizu: GitKeizuViewAPI;
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+    gitKeizu = createMockGitKeizuView();
+  });
+
+  it("routes showRecentActions=true to gitKeizu.setShowRecentActions (TC-026)", () => {
+    // Given: ResponseSetShowRecentActions with true
+    const msg: ResponseMessage = {
+      command: "setShowRecentActions",
+      showRecentActions: true
+    };
+
+    // When: handleMessage is called
+    handleMessage(msg, gitKeizu);
+
+    // Then: setShowRecentActions(true) is called once and no other API runs
+    expect(gitKeizu.setShowRecentActions).toHaveBeenCalledTimes(1);
+    expect(gitKeizu.setShowRecentActions).toHaveBeenCalledWith(true);
+    expect(gitKeizu.refresh).not.toHaveBeenCalled();
+    expect(showErrorDialog).not.toHaveBeenCalled();
+  });
+
+  it("routes showRecentActions=false to gitKeizu.setShowRecentActions (TC-027)", () => {
+    // Given: ResponseSetShowRecentActions with false
+    const msg: ResponseMessage = {
+      command: "setShowRecentActions",
+      showRecentActions: false
+    };
+
+    // When: handleMessage is called
+    handleMessage(msg, gitKeizu);
+
+    // Then: setShowRecentActions(false) is called once and no other API runs
+    expect(gitKeizu.setShowRecentActions).toHaveBeenCalledTimes(1);
+    expect(gitKeizu.setShowRecentActions).toHaveBeenCalledWith(false);
+    expect(gitKeizu.refresh).not.toHaveBeenCalled();
+    expect(showErrorDialog).not.toHaveBeenCalled();
   });
 });

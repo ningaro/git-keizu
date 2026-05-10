@@ -102,6 +102,15 @@ const mocks = vi.hoisted(() => {
     }
   );
   const createOrShow = vi.fn();
+  const notifyShowRecentActionsChanged = vi.fn();
+  const gitKeizuViewModule = {
+    GitKeizuView: {
+      createOrShow,
+      currentPanel: undefined as
+        | { notifyShowRecentActionsChanged: typeof notifyShowRecentActionsChanged }
+        | undefined
+    }
+  };
   const ExtensionStateMock = vi.fn(function (
     this: unknown,
     _context: unknown
@@ -163,6 +172,8 @@ const mocks = vi.hoisted(() => {
     diffDocProviderInstance,
     diffDocProviderScheme,
     extensionStateInstance,
+    gitKeizuViewModule,
+    notifyShowRecentActionsChanged,
     onDidChangeConfiguration,
     outputChannel,
     registerCommand,
@@ -203,11 +214,7 @@ vi.mock("../../src/extensionState", () => ({
   ExtensionState: mocks.ExtensionStateMock
 }));
 
-vi.mock("../../src/gitGraphView", () => ({
-  GitKeizuView: {
-    createOrShow: mocks.createOrShow
-  }
-}));
+vi.mock("../../src/gitGraphView", () => mocks.gitKeizuViewModule);
 
 vi.mock("../../src/repoManager", () => ({
   RepoManager: mocks.RepoManagerMock
@@ -230,6 +237,7 @@ const SHOW_STATUS_BAR_ITEM_SETTING = "git-keizu.showStatusBarItem";
 const DATE_TYPE_SETTING = "git-keizu.dateType";
 const MAX_DEPTH_OF_REPO_SEARCH_SETTING = "git-keizu.maxDepthOfRepoSearch";
 const GIT_PATH_SETTING = "git.path";
+const SHOW_RECENT_ACTIONS_SETTING = "git-keizu.menu.showRecentActions";
 const DIFF_DOC_PROVIDER_SCHEME = mocks.diffDocProviderScheme;
 const DEFAULT_EXTENSION_PATH = "/test/extension";
 const DEFAULT_REPO_PATH = "/repo";
@@ -365,6 +373,8 @@ function resetMockState(): void {
   mocks.diffDocProviderInstance.current = null;
   mocks.diffDocProviderConstruct.mockReset();
   mocks.createOrShow.mockReset();
+  mocks.notifyShowRecentActionsChanged.mockReset();
+  mocks.gitKeizuViewModule.GitKeizuView.currentPanel = undefined;
   mocks.createOutputChannel.mockReset();
   mocks.createOutputChannel.mockReturnValue(mocks.outputChannel);
   mocks.registerCommand.mockReset();
@@ -844,6 +854,64 @@ describe("extension", () => {
         expect(mocks.dataSourceInstance.generateGitCommandFormats).not.toHaveBeenCalled();
         expect(mocks.repoManagerInstance.maxDepthOfRepoSearchChanged).not.toHaveBeenCalled();
         expect(mocks.dataSourceInstance.registerGitPath).not.toHaveBeenCalled();
+      });
+
+      it("TC-021: notifies the open panel when showRecentActions changes alone", () => {
+        // Case: TC-021
+        // Given: activate registers the configuration listener and a panel exposes notifyShowRecentActionsChanged
+        activateExtension();
+        const configHandler = getConfigurationChangeHandler();
+        mocks.gitKeizuViewModule.GitKeizuView.currentPanel = {
+          notifyShowRecentActionsChanged: mocks.notifyShowRecentActionsChanged
+        };
+        const event = createConfigurationChangeEvent([SHOW_RECENT_ACTIONS_SETTING]);
+
+        // When: the configuration change handler is called
+        configHandler(event);
+
+        // Then: only notifyShowRecentActionsChanged runs; the else-if chain handlers are not invoked
+        expect(mocks.notifyShowRecentActionsChanged).toHaveBeenCalledTimes(ONE_CALL);
+        expect(mocks.statusBarItemInstance.refresh).not.toHaveBeenCalled();
+        expect(mocks.dataSourceInstance.generateGitCommandFormats).not.toHaveBeenCalled();
+        expect(mocks.repoManagerInstance.maxDepthOfRepoSearchChanged).not.toHaveBeenCalled();
+        expect(mocks.dataSourceInstance.registerGitPath).not.toHaveBeenCalled();
+      });
+
+      it("TC-022: notifies showRecentActions even when another watched setting also changes", () => {
+        // Case: TC-022
+        // Given: showStatusBarItem and showRecentActions both report true and the panel is open
+        activateExtension();
+        const configHandler = getConfigurationChangeHandler();
+        mocks.gitKeizuViewModule.GitKeizuView.currentPanel = {
+          notifyShowRecentActionsChanged: mocks.notifyShowRecentActionsChanged
+        };
+        const event = createConfigurationChangeEvent([
+          SHOW_STATUS_BAR_ITEM_SETTING,
+          SHOW_RECENT_ACTIONS_SETTING
+        ]);
+
+        // When: the configuration change handler is called
+        configHandler(event);
+
+        // Then: the else-if chain still routes statusBarItem.refresh and the standalone if also fires the recent-actions notification
+        expect(mocks.statusBarItemInstance.refresh).toHaveBeenCalledTimes(ONE_CALL);
+        expect(mocks.notifyShowRecentActionsChanged).toHaveBeenCalledTimes(ONE_CALL);
+      });
+
+      it("TC-023: short-circuits cleanly when no panel is open", () => {
+        // Case: TC-023
+        // Given: GitKeizuView.currentPanel is undefined and only showRecentActions matches
+        activateExtension();
+        const configHandler = getConfigurationChangeHandler();
+        mocks.gitKeizuViewModule.GitKeizuView.currentPanel = undefined;
+        const event = createConfigurationChangeEvent([SHOW_RECENT_ACTIONS_SETTING]);
+
+        // When: the configuration change handler is called
+        const configurationAction = () => configHandler(event);
+
+        // Then: optional chaining short-circuits and no error or side-effect occurs
+        expect(configurationAction).not.toThrow();
+        expect(mocks.notifyShowRecentActionsChanged).not.toHaveBeenCalled();
       });
     });
   });

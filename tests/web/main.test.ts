@@ -2129,6 +2129,53 @@ describe("GitKeizuView frontend integration", () => {
   });
 
   /* ---------------------------------------------------------------- */
+  /* setShowRecentActions() runtime sync (S29)                        */
+  /* ---------------------------------------------------------------- */
+
+  describe("setShowRecentActions()", () => {
+    function getViewState(): Record<string, unknown> {
+      return (globalThis as Record<string, unknown>).viewState as Record<string, unknown>;
+    }
+
+    it("updates viewState.showRecentActions to false without disturbing other state (TC-214)", () => {
+      // Given: existing viewState with showRecentActions=true
+      const viewState = getViewState();
+      viewState.showRecentActions = true;
+      const reposBefore = viewState.repos;
+      const lastActiveRepoBefore = viewState.lastActiveRepo;
+      const scrollContainer = document.getElementById("scrollContainer");
+      const scrollTopBefore = scrollContainer?.scrollTop ?? 0;
+      vi.clearAllMocks();
+
+      // When: setShowRecentActions(false) message is dispatched
+      dispatchMessage({ command: "setShowRecentActions", showRecentActions: false });
+
+      // Then: only the runtime flag is updated; no reload, save, repo, or scroll side effects
+      expect(viewState.showRecentActions).toBe(false);
+      expect(viewState.repos).toBe(reposBefore);
+      expect(viewState.lastActiveRepo).toBe(lastActiveRepoBefore);
+      expect(scrollContainer?.scrollTop ?? 0).toBe(scrollTopBefore);
+      expect(vscode.setState).not.toHaveBeenCalled();
+      expect(vscode.postMessage).not.toHaveBeenCalled();
+    });
+
+    it("updates viewState.showRecentActions to true without disturbing other state (TC-215)", () => {
+      // Given: existing viewState with showRecentActions=false
+      const viewState = getViewState();
+      viewState.showRecentActions = false;
+      vi.clearAllMocks();
+
+      // When: setShowRecentActions(true) message is dispatched
+      dispatchMessage({ command: "setShowRecentActions", showRecentActions: true });
+
+      // Then: viewState.showRecentActions becomes true and no other side effects fire
+      expect(viewState.showRecentActions).toBe(true);
+      expect(vscode.setState).not.toHaveBeenCalled();
+      expect(vscode.postMessage).not.toHaveBeenCalled();
+    });
+  });
+
+  /* ---------------------------------------------------------------- */
   /* handleKeyboardShortcut() — shortcut key matching (S10)           */
   /* ---------------------------------------------------------------- */
 

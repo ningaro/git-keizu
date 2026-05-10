@@ -2614,3 +2614,101 @@ describe("GitKeizuView loadBranches watcher orchestration", () => {
     expect(mocks.repoFileWatcherStop).toHaveBeenCalledTimes(1);
   });
 });
+
+describe("GitKeizuView notifyShowRecentActionsChanged runtime sync", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    mocks.messageHandler.current = null;
+    GitKeizuView.currentPanel = undefined;
+    mocks.getRepos.mockReturnValue({ [TEST_REPO]: "Test Repo" });
+  });
+
+  afterEach(() => {
+    GitKeizuView.currentPanel?.dispose();
+    GitKeizuView.currentPanel = undefined;
+  });
+
+  function createPanel(): void {
+    const mockDataSource = {} as unknown as DataSource;
+    const mockExtensionState = {
+      getLastActiveRepo: vi.fn(() => null),
+      isAvatarStorageAvailable: vi.fn(() => false),
+      setLastActiveRepo: vi.fn()
+    } as unknown as ExtensionState;
+    const mockAvatarManager = {
+      registerView: vi.fn(),
+      deregisterView: vi.fn()
+    } as unknown as AvatarManager;
+    const mockRepoManager = {
+      getRepos: mocks.getRepos,
+      registerViewCallback: vi.fn(),
+      deregisterViewCallback: vi.fn(),
+      setRepoState: vi.fn(),
+      checkReposExist: vi.fn()
+    } as unknown as RepoManager;
+
+    GitKeizuView.createOrShow(
+      "/test/extension",
+      mockDataSource,
+      mockExtensionState,
+      mockAvatarManager,
+      mockRepoManager
+    );
+  }
+
+  it("posts setShowRecentActions message with current config value (TC-066)", async () => {
+    // Case: TC-066
+    // Given: panel is open and config.showRecentActions() returns true (default mock)
+    createPanel();
+    await new Promise((resolve) => setTimeout(resolve, 0));
+    mocks.postMessage.mockClear();
+    const panelMock = vi.mocked(vscode.window.createWebviewPanel).mock.results[0].value as {
+      webview: { html: string };
+    };
+    const htmlBefore = panelMock.webview.html;
+
+    // When: notifyShowRecentActionsChanged is called on the open panel
+    GitKeizuView.currentPanel!.notifyShowRecentActionsChanged();
+
+    // Then: setShowRecentActions message is posted with showRecentActions: true and HTML is not regenerated
+    expect(mocks.postMessage).toHaveBeenCalledTimes(1);
+    expect(mocks.postMessage).toHaveBeenCalledWith({
+      command: "setShowRecentActions",
+      showRecentActions: true
+    });
+    expect(panelMock.webview.html).toBe(htmlBefore);
+  });
+
+  it("posts setShowRecentActions message when config returns false (TC-067)", async () => {
+    // Case: TC-067
+    // Given: panel is open and config.showRecentActions() returns false
+    const configModule = await import("../../src/config");
+    const getConfigMock = vi.mocked(configModule.getConfig);
+    const baseConfig = getConfigMock.getMockImplementation()!();
+    getConfigMock.mockImplementation(
+      () =>
+        ({
+          ...baseConfig,
+          showRecentActions: () => false
+        }) as unknown as ReturnType<typeof configModule.getConfig>
+    );
+
+    createPanel();
+    await new Promise((resolve) => setTimeout(resolve, 0));
+    mocks.postMessage.mockClear();
+
+    // When: notifyShowRecentActionsChanged is called
+    GitKeizuView.currentPanel!.notifyShowRecentActionsChanged();
+
+    // Then: setShowRecentActions message is posted with showRecentActions: false
+    expect(mocks.postMessage).toHaveBeenCalledTimes(1);
+    expect(mocks.postMessage).toHaveBeenCalledWith({
+      command: "setShowRecentActions",
+      showRecentActions: false
+    });
+
+    getConfigMock.mockImplementation(
+      () => baseConfig as unknown as ReturnType<typeof configModule.getConfig>
+    );
+  });
+});
