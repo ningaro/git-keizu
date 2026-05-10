@@ -410,6 +410,11 @@ export interface ResponseSelectRepo {
   repo: string;
 }
 
+export interface ResponseSetShowRecentActions {
+  command: "setShowRecentActions";
+  showRecentActions: boolean;
+}
+
 export interface RequestRenameBranch {
   command: "renameBranch";
   repo: string;
@@ -721,6 +726,7 @@ export type ResponseMessage =
   | ResponseRefresh
   | ResponseRemoveWorktree
   | ResponseSelectRepo
+  | ResponseSetShowRecentActions
   | ResponseRenameBranch
   | ResponseResetToCommit
   | ResponseResetUncommitted

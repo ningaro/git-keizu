@@ -538,6 +538,13 @@ export class GitKeizuView {
     this.panel.webview.postMessage(msg);
   }
 
+  public notifyShowRecentActionsChanged() {
+    this.sendMessage({
+      command: "setShowRecentActions",
+      showRecentActions: getConfig().showRecentActions()
+    });
+  }
+
   private async selectRepoFromUri(rootUri: vscode.Uri, repoManager: RepoManager) {
     const repoPath = getPathFromUri(rootUri);
     const repos = repoManager.getRepos();

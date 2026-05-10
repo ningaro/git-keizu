@@ -480,6 +480,10 @@ class GitKeizuView {
     }
   }
 
+  public setShowRecentActions(showRecentActions: boolean) {
+    viewState.showRecentActions = showRecentActions;
+  }
+
   /* Refresh */
   public refresh(hard: boolean) {
     if (hard) {

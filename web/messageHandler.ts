@@ -28,6 +28,7 @@ export interface GitKeizuViewAPI {
   loadRepos(repos: GitRepoSet, lastActiveRepo: string | null): void;
   refresh(hard: boolean): void;
   selectRepo(repo: string): void;
+  setShowRecentActions(showRecentActions: boolean): void;
 }
 
 export function handleMessage(msg: ResponseMessage, gitKeizu: GitKeizuViewAPI): void {
@@ -173,6 +174,9 @@ export function handleMessage(msg: ResponseMessage, gitKeizu: GitKeizuViewAPI): 
       break;
     case "selectRepo":
       gitKeizu.selectRepo(msg.repo);
+      break;
+    case "setShowRecentActions":
+      gitKeizu.setShowRecentActions(msg.showRecentActions);
       break;
     case "viewDiff":
       if (msg.success === false) showErrorDialog(t("error.viewDiff"), null, null);

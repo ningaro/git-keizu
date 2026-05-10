@@ -56,6 +56,9 @@ export function activate(context: vscode.ExtensionContext) {
       } else if (e.affectsConfiguration("git.path")) {
         dataSource.registerGitPath();
       }
+      if (e.affectsConfiguration("git-keizu.menu.showRecentActions")) {
+        GitKeizuView.currentPanel?.notifyShowRecentActionsChanged();
+      }
     }),
     repoManager
   );
