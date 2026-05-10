@@ -2,12 +2,12 @@
 
 > Source: `src/gitGraphView.ts`
 > Storage Mode: sharded
-> Generated: 2026-05-02T14:08:00Z
+> Generated: 2026-05-10T00:00:00Z
 > Language: TypeScript
 > Test Framework: Vitest
 > Total Shards: 4
-> Total Sections: 19
-> Total Cases: 65
+> Total Sections: 20
+> Total Cases: 67
 
 ## Shards
 
@@ -16,7 +16,7 @@
 | 01-message-routing-01.md             | message-routing             | 9        | 30    | 2026-05-02   |
 | 02-state-lifecycle-01.md             | state-lifecycle             | 6        | 18    | 2026-05-02   |
 | 03-worktree-actions-01.md            | worktree-actions            | 3        | 16    | 2026-05-02   |
-| 04-context-menu-recent-actions-01.md | context-menu-recent-actions | 1        | 1     | 2026-05-02   |
+| 04-context-menu-recent-actions-01.md | context-menu-recent-actions | 2        | 3     | 2026-05-10   |
 
 ## Origin Coverage
 
@@ -36,3 +36,4 @@
 | Feature 020 (legacy-branding-cleanup) (aidd-spec-tasks-test) | 02-state-lifecycle-01.md                           |
 | Feature 033 (watch-refresh-scope) Task 3                     | 02-state-lifecycle-01.md                           |
 | Feature 034 (context-menu-recent-actions) Task 1             | 04-context-menu-recent-actions-01.md               |
+| Feature 039 (show-recent-actions-runtime-sync)               | 04-context-menu-recent-actions-01.md               |

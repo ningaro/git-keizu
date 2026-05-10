@@ -76,6 +76,22 @@
 | TC-018  | `e.affectsConfiguration("git-keizu.showStatusBarItem")` と `e.affectsConfiguration("git-keizu.dateType")` の両方が `true` を返す                                        | Boundary - overlapping configuration matches                               | `else if` 連鎖のため `statusBarItem.refresh()` だけが呼ばれ、`dataSource.generateGitCommandFormats()` は呼ばれない。優先順位が先頭条件に固定される                          | L50-L53 |
 | TC-019  | `e.affectsConfiguration("git-keizu.showStatusBarItem")` が `true` で、`statusBarItem.refresh` が `Error("refresh failed")` を送出する                                   | External - configuration handler failure                                   | 設定変更リスナーが同じ `Error("refresh failed")` を送出し、後続の `else if` 分岐は評価されない                                                                              | L50-L51 |
 
+## S6: activate showRecentActions 設定変更通知
+
+> Origin: Feature 039 (show-recent-actions-runtime-sync) (light-spec-plan)
+> Added: 2026-05-10
+> Status: active
+> Supersedes: -
+
+**シグネチャ**: `(e: vscode.ConfigurationChangeEvent) => void`
+**テスト対象パス**: `src/extension.ts:60-62`
+
+| Case ID | Input / Precondition                                                                                                                                                                                                                      | Perspective (Normal / Validation / Exception / External / Boundary / Type) | Expected Result                                                                                                                                                                                                                             | Notes   |
+| ------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------- |
+| TC-021  | `activate` 実行時に `onDidChangeConfiguration(handler)` の `handler` を捕捉し、`GitKeizuView.currentPanel` をモック panel に差し替えた上で、`e.affectsConfiguration("git-keizu.menu.showRecentActions")` のみ `true` を返すイベントを渡す | Normal - branch                                                            | `GitKeizuView.currentPanel.notifyShowRecentActionsChanged()` が 1 回呼ばれる。`statusBarItem.refresh()`、`dataSource.generateGitCommandFormats()`、`repoManager.maxDepthOfRepoSearchChanged()`、`dataSource.registerGitPath()` は呼ばれない | L60-L62 |
+| TC-022  | `e.affectsConfiguration("git-keizu.showStatusBarItem")` と `e.affectsConfiguration("git-keizu.menu.showRecentActions")` の両方が `true` を返し、`GitKeizuView.currentPanel` がモック panel に差し替えられている                           | Boundary - overlapping configuration matches                               | `else if` 連鎖の優先順位通り `statusBarItem.refresh()` が 1 回呼ばれ、その後段の独立 `if` で `notifyShowRecentActionsChanged()` も 1 回呼ばれる                                                                                             | L50-L62 |
+| TC-023  | `GitKeizuView.currentPanel` が `undefined` の状態で `e.affectsConfiguration("git-keizu.menu.showRecentActions")` のみ `true` を返すイベントを渡す                                                                                         | Boundary - panel not opened                                                | `notifyShowRecentActionsChanged()` 呼び出しは `?.` でショートサーキットされ、例外は発生せず副作用もない                                                                                                                                     | L60-L62 |
+
 ## S5: deactivate no-op 終了
 
 > Origin: test-plan (既存コード分析)

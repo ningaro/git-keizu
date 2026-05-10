@@ -204,3 +204,18 @@
 | TC-161  | prevState.scrollTop が undefined（旧バージョンデータ） | Boundary - backward compat                                                 | scrollContainerElem.scrollTop が変更されない（0のまま）         | 後方互換       |
 | TC-162  | prevState が null（初回表示）                          | Boundary - no prevState                                                    | scrollTop 復元処理がスキップされる                              | 新規ウィンドウ |
 | TC-163  | prevState.scrollTop = 0                                | Boundary - zero value                                                      | scrollContainerElem.scrollTop が 0 に設定される（明示的にゼロ） | 保存値ゼロ     |
+
+## S29: setShowRecentActions() runtime 同期
+
+> Origin: Feature 039 (show-recent-actions-runtime-sync) (light-spec-plan)
+> Added: 2026-05-10
+> Status: active
+> Supersedes: -
+
+**シグネチャ**: `public setShowRecentActions(showRecentActions: boolean): void`
+**テスト対象パス**: `web/main.ts`
+
+| Case ID | Input / Precondition                                                                                                                                          | Perspective (Normal / Validation / Exception / External / Boundary / Type) | Expected Result                                                                                                                                                                                                                   | Notes                       |
+| ------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------- |
+| TC-214  | `viewState.showRecentActions = true` の状態で `setShowRecentActions(false)` を呼ぶ。currentRepo / scrollTop / expandedCommit / repos が事前にセットされている | Normal - standard                                                          | `viewState.showRecentActions` が `false` に更新される。`vscode.setState` / `requestLoadCommits` / `refresh` / `renderShowLoading` / `currentRepo` / `viewState.repos` / scroll 位置 / `expandedCommit` のいずれにも変更が起きない | runtime flag 単独更新の検証 |
+| TC-215  | `viewState.showRecentActions = false` の状態で `setShowRecentActions(true)` を呼ぶ                                                                            | Normal - standard                                                          | `viewState.showRecentActions` が `true` に更新される。他の state や副作用は発生しない                                                                                                                                             | 再表示への切り替えも同経路  |

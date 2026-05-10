@@ -1,10 +1,10 @@
 # テスト観点表インデックス
 
-> Auto-generated: 2026-05-09T00:00:00Z
+> Auto-generated: 2026-05-10T00:00:00Z
 > Total sources: 31
 > Total physical files: 41
-> Total sections: 275
-> Total cases: 1323
+> Total sections: 279
+> Total cases: 1332
 
 ## ソースファイル → 観点表（正引き）
 
@@ -14,9 +14,9 @@
 | src/config.ts          | single-file  | src/config-test.md             | 1      | 14       | 79    | 2026-05-02   |
 | src/dataSource.ts      | sharded      | src/dataSource-test/INDEX.md   | 3      | 26       | 155   | 2026-05-02   |
 | src/diffDocProvider.ts | single-file  | src/diffDocProvider-test.md    | 1      | 6        | 30    | 2026-03-21   |
-| src/extension.ts       | single-file  | src/extension-test.md          | 1      | 5        | 20    | 2026-03-22   |
+| src/extension.ts       | single-file  | src/extension-test.md          | 1      | 6        | 23    | 2026-05-10   |
 | src/extensionState.ts  | single-file  | src/extensionState-test.md     | 1      | 13       | 37    | 2026-05-02   |
-| src/gitGraphView.ts    | sharded      | src/gitGraphView-test/INDEX.md | 4      | 19       | 65    | 2026-05-02   |
+| src/gitGraphView.ts    | sharded      | src/gitGraphView-test/INDEX.md | 4      | 20       | 67    | 2026-05-10   |
 | src/i18n.ts            | single-file  | src/i18n-test.md               | 1      | 1        | 6     | 2026-05-03   |
 | src/repoFileWatcher.ts | single-file  | src/repoFileWatcher-test.md    | 1      | 9        | 45    | 2026-05-02   |
 | src/repoManager.ts     | single-file  | src/repoManager-test.md        | 1      | 18       | 104   | 2026-03-22   |
@@ -35,8 +35,8 @@
 | web/findWidget.ts      | single-file  | web/findWidget-test.md         | 1      | 7        | 32    | 2026-02-25   |
 | web/graph.ts           | single-file  | web/graph-test.md              | 1      | 17       | 59    | 2026-03-08   |
 | web/i18n.ts            | single-file  | web/i18n-test.md               | 1      | 1        | 5     | 2026-05-03   |
-| web/main.ts            | sharded      | web/main-test/INDEX.md         | 6      | 37       | 213   | 2026-04-04   |
-| web/messageHandler.ts  | single-file  | web/messageHandler-test.md     | 1      | 8        | 25    | 2026-04-04   |
+| web/main.ts            | sharded      | web/main-test/INDEX.md         | 6      | 38       | 215   | 2026-05-10   |
+| web/messageHandler.ts  | single-file  | web/messageHandler-test.md     | 1      | 9        | 27    | 2026-05-10   |
 | web/refMenu.ts         | single-file  | web/refMenu-test.md            | 1      | 13       | 72    | 2026-05-09   |
 | web/stashMenu.ts       | single-file  | web/stashMenu-test.md          | 1      | 8        | 30    | 2026-04-30   |
 | web/uncommittedMenu.ts | single-file  | web/uncommittedMenu-test.md    | 1      | 1        | 3     | 2026-03-09   |
@@ -89,6 +89,7 @@
 | Feature 034 (context-menu-recent-actions) Task 1-4                    | src/config-test.md, src/extensionState-test.md, src/gitGraphView-test/INDEX.md, web/commitMenu-test.md, web/contextMenu-test.md, web/fileMenu-test.md, web/refMenu-test.md                                     |
 | Feature 035 (japanese-ui-i18n) Task 8                                 | src/i18n-test.md, web/i18n-test.md, web/dates-test.md                                                                                                                                                          |
 | Feature 037 (delete-branch-recent-actions) Task 4                     | web/refMenu-test.md                                                                                                                                                                                            |
+| Feature 039 (show-recent-actions-runtime-sync)                        | src/extension-test.md, src/gitGraphView-test/INDEX.md, web/main-test/INDEX.md, web/messageHandler-test.md                                                                                                      |
 | test-plan                                                             | web/stashMenu-test.md                                                                                                                                                                                          |
 | test-plan (既存コード分析)                                            | src/avatarManager-test.md, src/diffDocProvider-test.md, src/extension-test.md, src/extensionState-test.md, src/repoFileWatcher-test.md, src/statusBarItem-test.md, web/branchLabels-test.md, web/dates-test.md |
 | test-plan (既存コード網羅)                                            | src/repoManager-test.md                                                                                                                                                                                        |

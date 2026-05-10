@@ -133,3 +133,18 @@
 | ------- | ------------------------------------------------------------ | -------------------------------------------------------------------------- | ----------------------------------------------------------------------------------- | ----------------------------- |
 | TC-024  | ResponseOpenFile: command="openFile", status=null            | Normal - success                                                           | showErrorDialog が呼ばれない。gitGraph のメソッドも呼ばれない（ノーオペレーション） | 成功時は何もしない            |
 | TC-025  | ResponseOpenFile: command="openFile", status="error message" | Exception - error display                                                  | showErrorDialog が ("Unable to open file", "error message", null) で呼ばれる        | removeWorktree パターンと同一 |
+
+## S9: handleMessage() setShowRecentActions レスポンス処理
+
+> Origin: Feature 039 (show-recent-actions-runtime-sync) (light-spec-plan)
+> Added: 2026-05-10
+> Status: active
+> Supersedes: -
+
+**シグネチャ**: `handleMessage(msg: ResponseMessage, gitGraph: GitGraphViewAPI): void`
+**テスト対象パス**: `web/messageHandler.ts`
+
+| Case ID | Input / Precondition                                                                  | Perspective (Normal / Validation / Exception / External / Boundary / Type) | Expected Result                                                                                               | Notes                                |
+| ------- | ------------------------------------------------------------------------------------- | -------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------- | ------------------------------------ |
+| TC-026  | ResponseSetShowRecentActions: command="setShowRecentActions", showRecentActions=true  | Normal - standard                                                          | `gitKeizu.setShowRecentActions(true)` が 1 回呼ばれる。`refresh` / `showErrorDialog` / 他の API は呼ばれない  | runtime 同期経路の routing を検証    |
+| TC-027  | ResponseSetShowRecentActions: command="setShowRecentActions", showRecentActions=false | Normal - standard                                                          | `gitKeizu.setShowRecentActions(false)` が 1 回呼ばれる。`refresh` / `showErrorDialog` / 他の API は呼ばれない | 設定値 `false` でも routing は同経路 |
