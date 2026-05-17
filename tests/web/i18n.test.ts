@@ -1,3 +1,6 @@
+import { readFileSync } from "node:fs";
+import { resolve } from "node:path";
+
 import { afterEach, describe, expect, it } from "vitest";
 
 import { getWebviewLocale, t } from "../../web/i18n";
@@ -53,6 +56,37 @@ describe("web i18n helper", () => {
 
     // Then: the helper falls back to the key
     expect(result).toBe("fallback.key");
+  });
+
+  // Cases below reference perspectives: docs/testing/perspectives/l10n/web/web.l10n.ja.json-test.md
+  it("Japanese l10n JSON contains the commit-origin Create Branch key (l10n TC-001)", () => {
+    // Case: TC-001 (l10n/web/web.l10n.ja.json-test.md)
+    // Given: the Japanese l10n bundle on disk
+    const jsonPath = resolve(process.cwd(), "l10n/web/web.l10n.ja.json");
+    const messages = JSON.parse(readFileSync(jsonPath, "utf-8"));
+
+    // When: looking up the commit-origin Create Branch dialog key
+    const key = "Enter the name of the branch you would like to create from commit {0}:";
+    const value = messages[key];
+
+    // Then: a non-empty Japanese translation is present
+    expect(typeof value).toBe("string");
+    expect(value).toContain("コミット");
+    expect(value).toContain("{0}");
+  });
+
+  it("Japanese l10n JSON keeps the stash-origin Create Branch key intact (l10n TC-002)", () => {
+    // Case: TC-002 (l10n/web/web.l10n.ja.json-test.md)
+    // Given: the Japanese l10n bundle on disk
+    const jsonPath = resolve(process.cwd(), "l10n/web/web.l10n.ja.json");
+    const messages = JSON.parse(readFileSync(jsonPath, "utf-8"));
+
+    // When: looking up the stash-origin Create Branch dialog key
+    const key = "Enter the name of the branch you would like to create from {0}:";
+    const value = messages[key];
+
+    // Then: the original Japanese translation is preserved
+    expect(value).toBe("{0} から作成するブランチ名を入力してください:");
   });
 
   it("TC-005: normalizes locale to ja only when webviewLocale is ja", () => {

@@ -195,3 +195,69 @@ describe("Config fallback defaults vs package.json", () => {
     });
   });
 });
+
+// package.json schema validation (perspectives: docs/testing/perspectives/package.json-test.md)
+describe("package.json contributes.configuration schema", () => {
+  function getPackageProperty(key: string): Record<string, unknown> | undefined {
+    return configProperties[`${CONFIG_NAMESPACE}.${key}`];
+  }
+
+  it("TC-001: initialLoadCommits has minimum of 1", () => {
+    // Case: TC-001 (package.json-test.md)
+    // Given: package.json schema is loaded
+    // When: reading initialLoadCommits schema entry
+    const schema = getPackageProperty("initialLoadCommits");
+    // Then: minimum is 1
+    expect(schema?.minimum).toBe(1);
+  });
+
+  it("TC-002: loadMoreCommits has minimum of 1", () => {
+    // Case: TC-002 (package.json-test.md)
+    // Given: package.json schema is loaded
+    // When: reading loadMoreCommits schema entry
+    const schema = getPackageProperty("loadMoreCommits");
+    // Then: minimum is 1
+    expect(schema?.minimum).toBe(1);
+  });
+
+  describe("graphColours.items.pattern", () => {
+    const schema = configProperties[`${CONFIG_NAMESPACE}.graphColours`] as Record<string, unknown>;
+    const items = schema.items as Record<string, unknown>;
+    const pattern = new RegExp(items.pattern as string);
+
+    it("TC-003: pattern accepts rgba with alpha", () => {
+      // Case: TC-003 (package.json-test.md)
+      // Given: graphColours pattern
+      // When: testing rgba(1, 2, 3, 0.5)
+      // Then: pattern matches
+      expect(pattern.test("rgba(1, 2, 3, 0.5)")).toBe(true);
+      expect(pattern.test("rgba(1, 2, 3, 1)")).toBe(true);
+    });
+
+    it("TC-004: pattern rejects 3-argument rgba", () => {
+      // Case: TC-004 (package.json-test.md)
+      // Given: graphColours pattern
+      // When: testing rgba(1, 2, 3)
+      // Then: pattern does not match
+      expect(pattern.test("rgba(1, 2, 3)")).toBe(false);
+    });
+
+    it("TC-005: pattern rejects rgba with out-of-range alpha", () => {
+      // Case: TC-005 (package.json-test.md)
+      // Given: graphColours pattern
+      // When: testing rgba(1, 2, 3, 1.5)
+      // Then: pattern does not match
+      expect(pattern.test("rgba(1, 2, 3, 1.5)")).toBe(false);
+    });
+
+    it("TC-006: pattern accepts HEX 6/8 and rgb forms", () => {
+      // Case: TC-006 (package.json-test.md)
+      // Given: graphColours pattern
+      // When: testing classic formats
+      // Then: each form matches
+      expect(pattern.test("#0085d9")).toBe(true);
+      expect(pattern.test("#0085d9cc")).toBe(true);
+      expect(pattern.test("rgb(1, 2, 3)")).toBe(true);
+    });
+  });
+});

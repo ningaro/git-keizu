@@ -1054,6 +1054,32 @@ describe("Commit recent action metadata (S8)", () => {
     );
   });
 
+  it("uses the commit-origin translation key for the Create Branch dialog prompt (TC-043)", () => {
+    // Case: TC-043
+    // Given: Create Branch menu item for a commit, Japanese translations injected
+    const messages = (globalThis as Record<string, unknown>).webviewMessages as Record<
+      string,
+      string
+    >;
+    const commitKey = "Enter the name of the branch you would like to create from commit {0}:";
+    messages[commitKey] = "コミット {0} から作成するブランチ名を入力してください:";
+
+    try {
+      const item = getCreateBranchItem();
+
+      // When: onClick is triggered
+      item.onClick();
+
+      // Then: showFormDialog is called with the Japanese commit-origin prompt
+      expect(showFormDialog).toHaveBeenCalledTimes(1);
+      const promptArg = (showFormDialog as ReturnType<typeof vi.fn>).mock.calls[0][0];
+      expect(promptArg).toContain("コミット");
+      expect(promptArg).toContain("作成するブランチ名を入力してください");
+    } finally {
+      delete messages[commitKey];
+    }
+  });
+
   it("does not record a recent action until the Add Tag dialog is submitted (TC-042)", () => {
     // Case: TC-042
     // Given: the Add Tag dialog is opened from the submenu

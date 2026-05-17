@@ -2176,6 +2176,65 @@ describe("GitKeizuView frontend integration", () => {
   });
 
   /* ---------------------------------------------------------------- */
+  /* normalizeCommitLoadCount() helper (web/main-test 07-load-count)  */
+  /* ---------------------------------------------------------------- */
+
+  describe("normalizeCommitLoadCount()", () => {
+    let normalize: typeof import("../../web/main").normalizeCommitLoadCount;
+
+    beforeAll(async () => {
+      // main.ts is already loaded by the outer beforeAll; this just retrieves the export
+      const mainModule = await import("../../web/main");
+      normalize = mainModule.normalizeCommitLoadCount;
+    });
+
+    it("normalizes 0 to 1 even when default is large (TC-216)", () => {
+      // Case: TC-216
+      // Given: a stored maxCommits of 0 (legacy state)
+      // When: normalized with default 300
+      const result = normalize(0, 300);
+      // Then: lower bound 1 is enforced
+      expect(result).toBe(1);
+    });
+
+    it("normalizes negative value to 1 (TC-217)", () => {
+      // Case: TC-217
+      // Given: a stored maxCommits of -50 (corrupted state)
+      // When: normalized with default 300
+      const result = normalize(-50, 300);
+      // Then: lower bound 1 is enforced
+      expect(result).toBe(1);
+    });
+
+    it("falls back to defaultValue when value is not finite (TC-218)", () => {
+      // Case: TC-218
+      // Given: maxCommits is NaN
+      // When: normalized with default 300
+      const result = normalize(Number.NaN, 300);
+      // Then: the default value is used (and is itself >= 1)
+      expect(result).toBe(300);
+    });
+
+    it("preserves positive values above the floor (TC-219)", () => {
+      // Case: TC-219
+      // Given: a typical Load More result of 400 (300 + 100)
+      // When: normalized with default 300
+      const result = normalize(400, 300);
+      // Then: the original value is returned
+      expect(result).toBe(400);
+    });
+
+    it("uses the floor when defaultValue is itself less than 1 (TC-220)", () => {
+      // Case: TC-220
+      // Given: a corrupted default and a non-finite incoming value
+      // When: normalized
+      const result = normalize(Number.NaN, 0);
+      // Then: the floor (1) is enforced even when defaultValue would be below it
+      expect(result).toBe(1);
+    });
+  });
+
+  /* ---------------------------------------------------------------- */
   /* handleKeyboardShortcut() — shortcut key matching (S10)           */
   /* ---------------------------------------------------------------- */
 
@@ -3019,6 +3078,126 @@ describe("GitKeizuView frontend integration", () => {
       // Then: dialog is closed next
       expect(hideDialog).toHaveBeenCalledTimes(1);
       expect(hideContextMenu).not.toHaveBeenCalled();
+    });
+
+    /* -------------------------------------------------------------- */
+    /* S40: handleEscape() priority chain (test-plan 既存コード網羅)  */
+    /* -------------------------------------------------------------- */
+
+    it("hideContextMenu wins as the first priority (TC-221)", () => {
+      // Case: TC-221
+      // Given: only the context menu is active
+      vi.mocked(isContextMenuActive).mockReturnValue(true);
+
+      // When: Escape is pressed
+      pressEscape();
+
+      // Then: hideContextMenu is called exactly once and lower-priority handlers are untouched
+      expect(hideContextMenu).toHaveBeenCalledTimes(1);
+      expect(hideDialog).not.toHaveBeenCalled();
+      expect(mockRepoDropdownInstance.close).not.toHaveBeenCalled();
+      expect(mockFindWidgetInstance.close).not.toHaveBeenCalled();
+    });
+
+    it("hideDialog wins as the second priority (TC-222)", () => {
+      // Case: TC-222
+      // Given: only the dialog is active (context menu inactive)
+      vi.mocked(isDialogActive).mockReturnValue(true);
+
+      // When: Escape is pressed
+      pressEscape();
+
+      // Then: hideDialog is called once and no dropdown/findWidget handler runs
+      expect(hideDialog).toHaveBeenCalledTimes(1);
+      expect(hideContextMenu).not.toHaveBeenCalled();
+      expect(mockRepoDropdownInstance.close).not.toHaveBeenCalled();
+      expect(mockFindWidgetInstance.close).not.toHaveBeenCalled();
+    });
+
+    it("repoDropdown.close wins as the third priority (TC-223)", () => {
+      // Case: TC-223
+      // Given: only the repo dropdown is open
+      mockRepoDropdownInstance.isOpen.mockReturnValue(true);
+
+      // When: Escape is pressed
+      pressEscape();
+
+      // Then: only repoDropdown.close() is invoked
+      expect(mockRepoDropdownInstance.close).toHaveBeenCalledTimes(1);
+      expect(mockBranchDropdownInstance.close).not.toHaveBeenCalled();
+      expect(mockFindWidgetInstance.close).not.toHaveBeenCalled();
+    });
+
+    it("findWidget.close runs when all menus/dialogs/dropdowns are inactive (TC-224)", () => {
+      // Case: TC-224
+      // Given: only the find widget is visible
+      mockFindWidgetInstance.isVisible.mockReturnValue(true);
+
+      // When: Escape is pressed
+      pressEscape();
+
+      // Then: only findWidget.close() is invoked
+      expect(mockFindWidgetInstance.close).toHaveBeenCalledTimes(1);
+      expect(mockRepoDropdownInstance.close).not.toHaveBeenCalled();
+      expect(hideDialog).not.toHaveBeenCalled();
+    });
+
+    it("hideCommitDetails runs as the final fallback when only expandedCommit is set (TC-225)", () => {
+      // Case: TC-225
+      // Given: a commit is expanded and no other UI is active
+      expandCommit(COMMIT_HASH_1);
+      vi.clearAllMocks();
+      resetAllUIStates();
+
+      // When: Escape is pressed
+      pressEscape();
+
+      // Then: the commit details DOM element is removed (hideCommitDetails was invoked)
+      const detailsElem = document.getElementById("commitDetails");
+      expect(detailsElem).toBeNull();
+    });
+
+    it("no-op when no UI components are active and no commit is expanded (TC-226)", () => {
+      // Case: TC-226
+      // Given: every UI state is inactive (resetAllUIStates ran in beforeEach) and no expandedCommit
+
+      // When: Escape is pressed
+      pressEscape();
+
+      // Then: every hide/close handler is left untouched
+      expect(hideContextMenu).not.toHaveBeenCalled();
+      expect(hideDialog).not.toHaveBeenCalled();
+      expect(mockRepoDropdownInstance.close).not.toHaveBeenCalled();
+      expect(mockBranchDropdownInstance.close).not.toHaveBeenCalled();
+      expect(mockFindWidgetInstance.close).not.toHaveBeenCalled();
+    });
+
+    it("contextMenu takes priority over dialog when both are active (TC-227)", () => {
+      // Case: TC-227
+      // Given: both contextMenu and dialog are active simultaneously
+      vi.mocked(isContextMenuActive).mockReturnValue(true);
+      vi.mocked(isDialogActive).mockReturnValue(true);
+
+      // When: Escape is pressed
+      pressEscape();
+
+      // Then: hideContextMenu runs once and hideDialog is suppressed by the early return
+      expect(hideContextMenu).toHaveBeenCalledTimes(1);
+      expect(hideDialog).not.toHaveBeenCalled();
+    });
+
+    it("repoDropdown takes priority over branchDropdown when both are open (TC-228)", () => {
+      // Case: TC-228
+      // Given: both repoDropdown and branchDropdown report isOpen()=true
+      mockRepoDropdownInstance.isOpen.mockReturnValue(true);
+      mockBranchDropdownInstance.isOpen.mockReturnValue(true);
+
+      // When: Escape is pressed
+      pressEscape();
+
+      // Then: only repoDropdown.close() is invoked, branchDropdown.close is suppressed
+      expect(mockRepoDropdownInstance.close).toHaveBeenCalledTimes(1);
+      expect(mockBranchDropdownInstance.close).not.toHaveBeenCalled();
     });
   });
 

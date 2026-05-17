@@ -73,6 +73,11 @@ vi.mock("node:crypto", () => ({
 }));
 
 vi.mock("../../src/config", () => ({
+  MIN_COMMIT_LOAD_COUNT: 1,
+  normalizeCommitLoadCount: (value: number, defaultValue: number) => {
+    const count = Number.isFinite(value) ? value : defaultValue;
+    return Math.max(1, count);
+  },
   getConfig: vi.fn(() => ({
     gitPath: () => "git",
     dateType: () => "Author Date",
@@ -143,6 +148,7 @@ import type { DataSource } from "../../src/dataSource";
 import type { ExtensionState } from "../../src/extensionState";
 import { GitKeizuView } from "../../src/gitGraphView";
 import type { RepoManager } from "../../src/repoManager";
+import { UNCOMMITTED_CHANGES_HASH } from "../../src/types";
 
 const TEST_REPO = "/test/repo";
 
@@ -1988,6 +1994,289 @@ describe("GitKeizuView viewState commitOrdering / loadCommits handler (S14)", ()
     // Then: dataSource.getCommits() is called with commitOrdering="date"
     expect(mocks.getCommits).toHaveBeenCalledTimes(1);
     expect(mocks.getCommits).toHaveBeenCalledWith(TEST_REPO, ["main"], 300, true, [], "date");
+  });
+
+  it("normalizes maxCommits=0 to 1 before calling dataSource.getCommits (TC-068)", async () => {
+    // Case: TC-068
+    // Given: GitKeizuView instance with mocked DataSource
+    createPanel();
+
+    // When: loadCommits message arrives with maxCommits=0
+    await mocks.messageHandler.current!({
+      command: "loadCommits",
+      repo: TEST_REPO,
+      branches: ["main"],
+      maxCommits: 0,
+      showRemoteBranches: true,
+      hard: false,
+      authors: [],
+      commitOrdering: "date"
+    });
+
+    // Then: dataSource.getCommits is called with maxCommits=1 (normalized)
+    expect(mocks.getCommits).toHaveBeenCalledTimes(1);
+    expect(mocks.getCommits).toHaveBeenCalledWith(TEST_REPO, ["main"], 1, true, [], "date");
+  });
+
+  it("normalizes negative maxCommits to 1 before calling dataSource.getCommits (TC-069)", async () => {
+    // Case: TC-069
+    // Given: GitKeizuView instance with mocked DataSource
+    createPanel();
+
+    // When: loadCommits message arrives with maxCommits=-10
+    await mocks.messageHandler.current!({
+      command: "loadCommits",
+      repo: TEST_REPO,
+      branches: ["main"],
+      maxCommits: -10,
+      showRemoteBranches: true,
+      hard: false,
+      authors: [],
+      commitOrdering: "date"
+    });
+
+    // Then: dataSource.getCommits is called with maxCommits=1 (normalized)
+    expect(mocks.getCommits).toHaveBeenCalledTimes(1);
+    expect(mocks.getCommits).toHaveBeenCalledWith(TEST_REPO, ["main"], 1, true, [], "date");
+  });
+});
+
+/* ------------------------------------------------------------------ */
+/* S16: viewDiff エラーハンドリング                                    */
+/* ------------------------------------------------------------------ */
+
+describe("GitKeizuView viewDiff error handling (S16)", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    mocks.messageHandler.current = null;
+    GitKeizuView.currentPanel = undefined;
+
+    mocks.getRepos.mockReturnValue({ [TEST_REPO]: "Test Repo" });
+    mocks.encodeDiffDocUri.mockImplementation(
+      (_repo: string, filePath: string, commit: string) => ({
+        toString: () => `git-keizu:${filePath}?commit=${commit}`
+      })
+    );
+
+    const mockDataSource = {} as unknown as DataSource;
+    const mockExtensionState = {
+      getLastActiveRepo: vi.fn(() => null),
+      isAvatarStorageAvailable: vi.fn(() => false),
+      setLastActiveRepo: vi.fn()
+    } as unknown as ExtensionState;
+    const mockAvatarManager = {
+      registerView: vi.fn(),
+      deregisterView: vi.fn()
+    } as unknown as AvatarManager;
+    const mockRepoManager = {
+      getRepos: mocks.getRepos,
+      registerViewCallback: vi.fn(),
+      deregisterViewCallback: vi.fn(),
+      setRepoState: vi.fn(),
+      checkReposExist: vi.fn()
+    } as unknown as RepoManager;
+
+    GitKeizuView.createOrShow(
+      "/test/extension",
+      mockDataSource,
+      mockExtensionState,
+      mockAvatarManager,
+      mockRepoManager
+    );
+  });
+
+  afterEach(() => {
+    GitKeizuView.currentPanel?.dispose();
+    GitKeizuView.currentPanel = undefined;
+  });
+
+  it("returns success=false when vscode.diff rejects in compare mode (TC-070)", async () => {
+    // Case: TC-070
+    // Given: compareWithHash is supplied and vscode.commands.executeCommand rejects
+    mocks.executeCommand.mockRejectedValueOnce(new Error("diff editor unavailable"));
+
+    // When: viewDiff message with compareWithHash is dispatched
+    await mocks.messageHandler.current!({
+      command: "viewDiff",
+      repo: TEST_REPO,
+      commitHash: "abc1234567890abcdef1234567890abcdef123456",
+      oldFilePath: "src/old.ts",
+      newFilePath: "src/new.ts",
+      type: "M",
+      compareWithHash: "def4567890abcdef1234567890abcdef12345678"
+    });
+
+    // Then: success=false is posted; the rejection is swallowed by the try/catch
+    expect(mocks.executeCommand).toHaveBeenCalledTimes(1);
+    expect(mocks.postMessage).toHaveBeenCalledWith({
+      command: "viewDiff",
+      success: false
+    });
+  });
+
+  it("returns success=false when vscode.diff rejects in uncommitted mode (TC-071)", async () => {
+    // Case: TC-071
+    // Given: commitHash equals UNCOMMITTED_CHANGES_HASH and vscode.commands.executeCommand rejects
+    mocks.executeCommand.mockRejectedValueOnce(new Error("diff editor unavailable"));
+
+    // When: viewDiff message for uncommitted changes is dispatched
+    await mocks.messageHandler.current!({
+      command: "viewDiff",
+      repo: TEST_REPO,
+      commitHash: UNCOMMITTED_CHANGES_HASH,
+      oldFilePath: "src/file.ts",
+      newFilePath: "src/file.ts",
+      type: "M"
+    });
+
+    // Then: success=false is posted; the rejection is swallowed by the try/catch
+    expect(mocks.executeCommand).toHaveBeenCalledTimes(1);
+    expect(mocks.postMessage).toHaveBeenCalledWith({
+      command: "viewDiff",
+      success: false
+    });
+  });
+
+  it("returns success=false when vscode.diff rejects in normal commit mode (TC-072)", async () => {
+    // Case: TC-072
+    // Given: a normal commit hash (no compareWithHash) and vscode.commands.executeCommand rejects
+    mocks.executeCommand.mockRejectedValueOnce(new Error("diff editor unavailable"));
+
+    // When: viewDiff message for a normal commit is dispatched
+    await mocks.messageHandler.current!({
+      command: "viewDiff",
+      repo: TEST_REPO,
+      commitHash: "abc1234567890abcdef1234567890abcdef123456",
+      oldFilePath: "src/file.ts",
+      newFilePath: "src/file.ts",
+      type: "M"
+    });
+
+    // Then: success=false is posted; the rejection is swallowed by the try/catch
+    expect(mocks.executeCommand).toHaveBeenCalledTimes(1);
+    expect(mocks.postMessage).toHaveBeenCalledWith({
+      command: "viewDiff",
+      success: false
+    });
+  });
+});
+
+/* ------------------------------------------------------------------ */
+/* S17: 未登録リポジトリのメッセージガード                              */
+/* ------------------------------------------------------------------ */
+
+describe("GitKeizuView unregistered repo guard (S17)", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    mocks.messageHandler.current = null;
+    GitKeizuView.currentPanel = undefined;
+
+    // Only TEST_REPO is registered; unrecognized paths must be rejected
+    mocks.getRepos.mockReturnValue({ [TEST_REPO]: "Test Repo" });
+    mocks.getCommits.mockResolvedValue({
+      commits: [],
+      head: null,
+      moreCommitsAvailable: false,
+      authors: []
+    });
+
+    const mockDataSource = {
+      getCommits: mocks.getCommits
+    } as unknown as DataSource;
+    const mockExtensionState = {
+      getLastActiveRepo: vi.fn(() => null),
+      isAvatarStorageAvailable: vi.fn(() => false),
+      setLastActiveRepo: vi.fn()
+    } as unknown as ExtensionState;
+    const mockAvatarManager = {
+      registerView: vi.fn(),
+      deregisterView: vi.fn()
+    } as unknown as AvatarManager;
+    const mockRepoManager = {
+      getRepos: mocks.getRepos,
+      registerViewCallback: vi.fn(),
+      deregisterViewCallback: vi.fn(),
+      setRepoState: vi.fn(),
+      checkReposExist: vi.fn(() => false)
+    } as unknown as RepoManager;
+
+    GitKeizuView.createOrShow(
+      "/test/extension",
+      mockDataSource,
+      mockExtensionState,
+      mockAvatarManager,
+      mockRepoManager
+    );
+  });
+
+  afterEach(() => {
+    GitKeizuView.currentPanel?.dispose();
+    GitKeizuView.currentPanel = undefined;
+  });
+
+  it("drops loadCommits messages for an unregistered repo (TC-073)", async () => {
+    // Case: TC-073
+    // Given: a loadCommits message targeting a repo path that is NOT in RepoManager.getRepos()
+    mocks.postMessage.mockClear();
+
+    // When: the message is dispatched
+    await mocks.messageHandler.current!({
+      command: "loadCommits",
+      repo: "/unknown/repo/path",
+      branches: ["main"],
+      maxCommits: 100,
+      showRemoteBranches: true,
+      hard: false,
+      authors: [],
+      commitOrdering: "date"
+    });
+
+    // Then: DataSource.getCommits is not called and no response is posted for the dropped message
+    expect(mocks.getCommits).not.toHaveBeenCalled();
+    const viewDiffResponses = mocks.postMessage.mock.calls.filter(
+      (call) => (call[0] as Record<string, unknown>).command === "loadCommits"
+    );
+    expect(viewDiffResponses).toHaveLength(0);
+  });
+
+  it("bypasses the guard for copyToClipboard even when repo is unregistered (TC-074)", async () => {
+    // Case: TC-074
+    // Given: a copyToClipboard message that does not include a `repo` property
+    mocks.postMessage.mockClear();
+
+    // When: the message is dispatched
+    await mocks.messageHandler.current!({
+      command: "copyToClipboard",
+      type: "Commit Hash",
+      data: "abc1234"
+    });
+
+    // Then: the handler still posts a copyToClipboard response (guard bypassed)
+    expect(mocks.postMessage).toHaveBeenCalledWith(
+      expect.objectContaining({
+        command: "copyToClipboard",
+        type: "Commit Hash"
+      })
+    );
+  });
+
+  it("bypasses the guard for loadRepos messages without a repo key (TC-075)", async () => {
+    // Case: TC-075
+    // Given: a loadRepos message without `repo` property (the guard requires `"repo" in msg`)
+    mocks.postMessage.mockClear();
+
+    // When: the loadRepos message is dispatched with check=false
+    await mocks.messageHandler.current!({
+      command: "loadRepos",
+      check: false
+    });
+
+    // Then: respondLoadRepos posts a loadRepos response back to the webview
+    expect(mocks.postMessage).toHaveBeenCalledWith(
+      expect.objectContaining({
+        command: "loadRepos"
+      })
+    );
   });
 });
 

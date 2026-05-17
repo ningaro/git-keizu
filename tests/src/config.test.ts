@@ -609,6 +609,166 @@ describe("dialogDefaults createWorktree/removeWorktree", () => {
   });
 });
 
+// S15: initialLoadCommits() / loadMoreCommits() 1 未満補正
+describe("commit load count normalization", () => {
+  beforeEach(() => {
+    mockGet.mockReset();
+  });
+
+  // Case: TC-081
+  it("initialLoadCommits returns 300 by default", () => {
+    // Given: no setting configured (mock returns default)
+    mockGet.mockImplementation((_key: string, defaultValue: unknown) => defaultValue);
+    // When: reading initialLoadCommits
+    const config = getConfig();
+    const result = config.initialLoadCommits();
+    // Then: default value 300 is returned
+    expect(result).toBe(300);
+  });
+
+  // Case: TC-082
+  it("initialLoadCommits normalizes 0 to 1", () => {
+    // Given: initialLoadCommits configured as 0
+    mockGet.mockImplementation((key: string, defaultValue: unknown) =>
+      key === "initialLoadCommits" ? 0 : defaultValue
+    );
+    // When: reading initialLoadCommits
+    const config = getConfig();
+    const result = config.initialLoadCommits();
+    // Then: 0 is normalized to 1
+    expect(result).toBe(1);
+  });
+
+  // Case: TC-083
+  it("initialLoadCommits normalizes negative value to 1", () => {
+    // Given: initialLoadCommits configured as -50
+    mockGet.mockImplementation((key: string, defaultValue: unknown) =>
+      key === "initialLoadCommits" ? -50 : defaultValue
+    );
+    // When: reading initialLoadCommits
+    const config = getConfig();
+    const result = config.initialLoadCommits();
+    // Then: negative is normalized to 1
+    expect(result).toBe(1);
+  });
+
+  // Case: TC-084
+  it("loadMoreCommits returns 100 by default", () => {
+    // Given: no setting configured
+    mockGet.mockImplementation((_key: string, defaultValue: unknown) => defaultValue);
+    // When: reading loadMoreCommits
+    const config = getConfig();
+    const result = config.loadMoreCommits();
+    // Then: default value 100 is returned
+    expect(result).toBe(100);
+  });
+
+  // Case: TC-085
+  it("loadMoreCommits normalizes 0 to 1", () => {
+    // Given: loadMoreCommits configured as 0
+    mockGet.mockImplementation((key: string, defaultValue: unknown) =>
+      key === "loadMoreCommits" ? 0 : defaultValue
+    );
+    // When: reading loadMoreCommits
+    const config = getConfig();
+    const result = config.loadMoreCommits();
+    // Then: 0 is normalized to 1
+    expect(result).toBe(1);
+  });
+
+  // Case: TC-086
+  it("loadMoreCommits preserves positive value above 1", () => {
+    // Given: loadMoreCommits configured as 250
+    mockGet.mockImplementation((key: string, defaultValue: unknown) =>
+      key === "loadMoreCommits" ? 250 : defaultValue
+    );
+    // When: reading loadMoreCommits
+    const config = getConfig();
+    const result = config.loadMoreCommits();
+    // Then: 250 is preserved
+    expect(result).toBe(250);
+  });
+});
+
+// S16: graphColours() RGBA filter
+describe("graphColours RGBA filter", () => {
+  beforeEach(() => {
+    mockGet.mockReset();
+  });
+
+  function withGraphColours(values: string[]) {
+    mockGet.mockImplementation((key: string, defaultValue: unknown) =>
+      key === "graphColours" ? values : defaultValue
+    );
+  }
+
+  // Case: TC-087
+  it("accepts rgba(r, g, b, 0.5)", () => {
+    // Given: graphColours contains rgba with alpha 0.5
+    withGraphColours(["rgba(1, 2, 3, 0.5)"]);
+    // When: reading graphColours
+    const config = getConfig();
+    const result = config.graphColours();
+    // Then: rgba alpha 0.5 passes the filter
+    expect(result).toEqual(["rgba(1, 2, 3, 0.5)"]);
+  });
+
+  // Case: TC-088
+  it("accepts rgba(r, g, b, 1)", () => {
+    // Given: graphColours contains rgba with alpha 1
+    withGraphColours(["rgba(1, 2, 3, 1)"]);
+    // When: reading graphColours
+    const config = getConfig();
+    const result = config.graphColours();
+    // Then: rgba alpha 1 passes the filter
+    expect(result).toEqual(["rgba(1, 2, 3, 1)"]);
+  });
+
+  // Case: TC-089
+  it("rejects rgba(r, g, b) with only 3 arguments", () => {
+    // Given: graphColours contains rgba with only 3 args
+    withGraphColours(["rgba(1, 2, 3)"]);
+    // When: reading graphColours
+    const config = getConfig();
+    const result = config.graphColours();
+    // Then: 3-argument rgba is filtered out
+    expect(result).toEqual([]);
+  });
+
+  // Case: TC-090
+  it("rejects rgba with alpha out of range", () => {
+    // Given: graphColours contains rgba with alpha 1.5
+    withGraphColours(["rgba(1, 2, 3, 1.5)"]);
+    // When: reading graphColours
+    const config = getConfig();
+    const result = config.graphColours();
+    // Then: out-of-range alpha is filtered out
+    expect(result).toEqual([]);
+  });
+
+  // Case: TC-091
+  it("accepts rgb(r, g, b) and 6/8-digit HEX", () => {
+    // Given: a mix of valid formats
+    withGraphColours(["rgb(1, 2, 3)", "#0085d9", "#0085d9cc"]);
+    // When: reading graphColours
+    const config = getConfig();
+    const result = config.graphColours();
+    // Then: all classic formats pass the filter
+    expect(result).toEqual(["rgb(1, 2, 3)", "#0085d9", "#0085d9cc"]);
+  });
+
+  // Case: TC-092
+  it("filters out invalid entries while keeping valid ones", () => {
+    // Given: mixed valid and invalid entries
+    withGraphColours(["rgba(1, 2, 3, 0.5)", "rgba(1, 2, 3)", "#0085d9", "not-a-color"]);
+    // When: reading graphColours
+    const config = getConfig();
+    const result = config.graphColours();
+    // Then: only valid entries remain in original order
+    expect(result).toEqual(["rgba(1, 2, 3, 0.5)", "#0085d9"]);
+  });
+});
+
 // S13: openNewTabEditorGroup() エディタグループ設定
 describe("openNewTabEditorGroup", () => {
   beforeEach(() => {
@@ -689,5 +849,73 @@ describe("openNewTabEditorGroup", () => {
     const result = config.openNewTabEditorGroup();
     // Then: falls back to ViewColumn.Active (-1)
     expect(result).toBe(-1);
+  });
+});
+
+// S17: gitPath() Git 実行パス解決
+describe("gitPath", () => {
+  beforeEach(() => {
+    mockGet.mockReset();
+  });
+
+  it("returns 'git' when git.path is null (default fallback) (TC-093)", () => {
+    // Case: TC-093
+    // Given: git.path setting returns null (VS Code default behavior)
+    mockGet.mockImplementation((key: string, defaultValue: unknown) =>
+      key === "path" ? null : defaultValue
+    );
+
+    // When: reading gitPath
+    const config = getConfig();
+    const result = config.gitPath();
+
+    // Then: falls back to "git"
+    expect(result).toBe("git");
+  });
+
+  it("returns configured git.path as-is (TC-094)", () => {
+    // Case: TC-094
+    // Given: git.path configured to a Unix-style absolute path
+    mockGet.mockImplementation((key: string, defaultValue: unknown) =>
+      key === "path" ? "/usr/local/bin/git" : defaultValue
+    );
+
+    // When: reading gitPath
+    const config = getConfig();
+    const result = config.gitPath();
+
+    // Then: the configured path is returned without modification
+    expect(result).toBe("/usr/local/bin/git");
+  });
+
+  it("returns empty string when git.path is set to empty string (TC-095)", () => {
+    // Case: TC-095
+    // Given: git.path configured to an empty string (only !== null is checked)
+    mockGet.mockImplementation((key: string, defaultValue: unknown) =>
+      key === "path" ? "" : defaultValue
+    );
+
+    // When: reading gitPath
+    const config = getConfig();
+    const result = config.gitPath();
+
+    // Then: empty string is returned (not normalized to "git")
+    expect(result).toBe("");
+  });
+
+  it("returns Windows-style git.path as-is (TC-096)", () => {
+    // Case: TC-096
+    // Given: git.path configured to a Windows-style absolute path
+    const windowsPath = "C:\\Program Files\\Git\\bin\\git.exe";
+    mockGet.mockImplementation((key: string, defaultValue: unknown) =>
+      key === "path" ? windowsPath : defaultValue
+    );
+
+    // When: reading gitPath
+    const config = getConfig();
+    const result = config.gitPath();
+
+    // Then: the Windows path is returned without modification
+    expect(result).toBe(windowsPath);
   });
 });
