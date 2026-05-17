@@ -4,7 +4,7 @@ import * as path from "node:path";
 import * as vscode from "vscode";
 
 import { AvatarManager } from "./avatarManager";
-import { getConfig } from "./config";
+import { getConfig, MIN_COMMIT_LOAD_COUNT, normalizeCommitLoadCount } from "./config";
 import { DataSource } from "./dataSource";
 import { encodeDiffDocUri } from "./diffDocProvider";
 import { ExtensionState } from "./extensionState";
@@ -308,7 +308,7 @@ export class GitKeizuView {
               ...(await this.dataSource.getCommits(
                 msg.repo,
                 msg.branches,
-                msg.maxCommits,
+                normalizeCommitLoadCount(msg.maxCommits, MIN_COMMIT_LOAD_COUNT),
                 msg.showRemoteBranches,
                 msg.authors,
                 msg.commitOrdering

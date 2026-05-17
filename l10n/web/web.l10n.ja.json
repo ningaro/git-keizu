@@ -125,6 +125,7 @@
   "Yes, apply stash": "はい、スタッシュを適用",
   "Create Branch from Stash": "スタッシュからブランチを作成",
   "Enter the name of the branch you would like to create from {0}:": "{0} から作成するブランチ名を入力してください:",
+  "Enter the name of the branch you would like to create from commit {0}:": "コミット {0} から作成するブランチ名を入力してください:",
   "Create Branch": "ブランチを作成",
   "Pop Stash": "スタッシュを pop",
   "Are you sure you want to pop {0}? This will remove the stash entry.": "{0} を pop しますか? この操作によりスタッシュ項目は削除されます。",

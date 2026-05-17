@@ -41,6 +41,13 @@ import {
 } from "./utils";
 
 const FLASH_ANIMATION_DURATION_MS = 850;
+export const MIN_COMMIT_LOAD_COUNT = 1;
+
+export function normalizeCommitLoadCount(value: number, defaultValue: number): number {
+  const count = Number.isFinite(value) ? value : defaultValue;
+  return Math.max(MIN_COMMIT_LOAD_COUNT, count);
+}
+
 const SCROLL_PADDING_TOP = 8;
 const SCROLL_ROW_HEIGHT = 32;
 const SCROLL_CENTER_OFFSET = 12;
@@ -248,7 +255,10 @@ class GitKeizuView {
       this.showRemoteBranchesElem.checked = this.showRemoteBranches;
       if (this.gitRepos[prevState.currentRepo] !== undefined) {
         this.currentRepo = prevState.currentRepo;
-        this.maxCommits = prevState.maxCommits;
+        this.maxCommits = normalizeCommitLoadCount(
+          prevState.maxCommits,
+          this.config.initialLoadCommits
+        );
         this.expandedCommit = prevState.expandedCommit;
         this.avatars = prevState.avatars;
         this.loadBranches(prevState.gitBranches, prevState.gitBranchHead, true, true);
@@ -517,7 +527,7 @@ class GitKeizuView {
       command: "loadCommits",
       repo: this.currentRepo!,
       branches: this.selectedBranches,
-      maxCommits: this.maxCommits,
+      maxCommits: normalizeCommitLoadCount(this.maxCommits, this.config.initialLoadCommits),
       showRemoteBranches: this.showRemoteBranches,
       hard: hard,
       authors: this.selectedAuthors,
@@ -703,7 +713,10 @@ class GitKeizuView {
         (<HTMLElement>(
           document.getElementById("loadMoreCommitsBtn")!.parentNode!
         )).innerHTML = `<h2 id="loadingHeader">${svgIcons.loading}${t("loading.label")}</h2>`;
-        this.maxCommits += this.config.loadMoreCommits;
+        this.maxCommits = normalizeCommitLoadCount(
+          this.maxCommits + this.config.loadMoreCommits,
+          this.config.initialLoadCommits
+        );
         this.hideCommitDetails();
         this.saveState();
         this.requestLoadCommits(true, () => {});
@@ -1105,7 +1118,10 @@ class GitKeizuView {
         scrollTop + clientHeight >= scrollHeight - SCROLL_AUTO_LOAD_THRESHOLD
       ) {
         this.isLoadingMoreCommits = true;
-        this.maxCommits += this.config.loadMoreCommits;
+        this.maxCommits = normalizeCommitLoadCount(
+          this.maxCommits + this.config.loadMoreCommits,
+          this.config.initialLoadCommits
+        );
         this.requestLoadCommits(true, () => {
           this.isLoadingMoreCommits = false;
         });

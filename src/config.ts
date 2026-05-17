@@ -12,6 +12,16 @@ import {
 const KEYBINDING_PATTERN = /^CTRL\/CMD \+ [A-Z]$/;
 const UNASSIGNED = "UNASSIGNED";
 
+export const MIN_COMMIT_LOAD_COUNT = 1;
+
+export function normalizeCommitLoadCount(value: number, defaultValue: number): number {
+  const count = Number.isFinite(value) ? value : defaultValue;
+  return Math.max(MIN_COMMIT_LOAD_COUNT, count);
+}
+
+export const GRAPH_COLOUR_PATTERN =
+  /^\s*(#[0-9a-fA-F]{6}|#[0-9a-fA-F]{8}|rgb\s*\(\s*\d{1,3}\s*,\s*\d{1,3}\s*,\s*\d{1,3}\s*\)|rgba\s*\(\s*\d{1,3}\s*,\s*\d{1,3}\s*,\s*\d{1,3}\s*,\s*(0(\.\d+)?|1(\.0+)?)\s*\))\s*$/;
+
 export type OpenNewTabEditorGroupValue =
   | "Active"
   | "Beside"
@@ -120,12 +130,7 @@ class Config {
         "#6f24d6",
         "#ffcc00"
       ])
-      .filter(
-        (v) =>
-          v.match(
-            /^\s*(#[0-9a-fA-F]{6}|#[0-9a-fA-F]{8}|rgb[a]?\s*\(\d{1,3},\s*\d{1,3},\s*\d{1,3}\))\s*$/
-          ) !== null
-      );
+      .filter((v) => GRAPH_COLOUR_PATTERN.test(v));
   }
 
   public graphStyle(): GraphStyle {
@@ -133,7 +138,8 @@ class Config {
   }
 
   public initialLoadCommits() {
-    return this.workspaceConfiguration.get("initialLoadCommits", 300);
+    const value = this.workspaceConfiguration.get<number>("initialLoadCommits", 300);
+    return normalizeCommitLoadCount(value, 300);
   }
 
   public keyboardShortcutFind(): string | null {
@@ -157,7 +163,8 @@ class Config {
   }
 
   public loadMoreCommits() {
-    return this.workspaceConfiguration.get("loadMoreCommits", 100);
+    const value = this.workspaceConfiguration.get<number>("loadMoreCommits", 100);
+    return normalizeCommitLoadCount(value, 100);
   }
 
   public loadMoreCommitsAutomatically(): boolean {
