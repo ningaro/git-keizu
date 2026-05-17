@@ -7,6 +7,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.7.7] - 2026-05-17
+
+### Added
+
+- **RGBA colour support in `graphColours`**: The `git-keizu.graphColours` setting now accepts `rgba(r, g, b, a)` values with an explicit alpha channel (e.g. `rgba(0, 133, 217, 0.5)`), in addition to the existing `#RRGGBB`, `#RRGGBBAA`, and `rgb(r, g, b)` formats — useful for tuning graph line opacity without resorting to 8-digit hex. The setting description now reads "Colour (HEX, RGB or RGBA)".
+
+### Fixed
+
+- **Commit load counts no longer break with `0` or negative values**: `git-keizu.initialLoadCommits` and `git-keizu.loadMoreCommits` now declare a minimum of `1` in the setting schema and are clamped at runtime, so misconfigured values (`0`, negative numbers, or non-finite values) no longer cause an empty initial page or trigger an effectively unbounded `git log` read.
+- **`rgba(r, g, b)` without alpha no longer slips through**: The 3-argument `rgba(...)` form (with no alpha) was previously accepted by the colour validator even though CSS requires an alpha component; the validator now requires alpha for `rgba(...)` and rejects the malformed form.
+- **Japanese translation for "Create Branch from Commit" dialog**: The branch-name prompt shown when creating a branch from a commit's context menu is now fully translated in Japanese UI mode — previously the dialog text appeared in English because the `from commit {0}` i18n key was missing from the Japanese dictionary.
+
+### Changed
+
+- **Extension marketplace description shortened**: The VS Code Marketplace and Open VSX description has been trimmed further, dropping the "for VS Code" segment so the headline reads cleanly at narrow widths.
+
 ## [0.7.6] - 2026-05-10
 
 ### Changed
@@ -376,7 +392,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 Initial release as Git Keizu — forked from [neo-git-graph](https://github.com/asispts/neo-git-graph) (originally [Git Graph](https://github.com/mhutchie/vscode-git-graph) by mhutchie, MIT).
 
-[Unreleased]: https://github.com/numlia/git-keizu/compare/v0.7.6...HEAD
+[Unreleased]: https://github.com/numlia/git-keizu/compare/v0.7.7...HEAD
+[0.7.7]: https://github.com/numlia/git-keizu/compare/v0.7.6...v0.7.7
 [0.7.6]: https://github.com/numlia/git-keizu/compare/v0.7.5...v0.7.6
 [0.7.5]: https://github.com/numlia/git-keizu/compare/v0.7.4...v0.7.5
 [0.7.4]: https://github.com/numlia/git-keizu/compare/v0.7.3...v0.7.4

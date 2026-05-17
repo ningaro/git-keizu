@@ -98,7 +98,7 @@ All settings are under the `git-keizu.*` namespace.
 | `dateFormat`                            | `Date & Time`  | Date format: `Date & Time`, `Date Only`, or `Relative`                                |
 | `dateType`                              | `Author Date`  | Date type: `Author Date` or `Commit Date`                                             |
 | `fetchAvatars`                          | `false`        | Fetch commit author avatars from GitHub, GitLab, or Gravatar                          |
-| `graphColours`                          | _(12 colours)_ | Colours used on the graph (HEX or RGB array)                                          |
+| `graphColours`                          | _(12 colours)_ | Colours used on the graph (HEX, RGB, or RGBA array)                                   |
 | `graphStyle`                            | `rounded`      | Graph line style: `rounded` or `angular`                                              |
 | `initialLoadCommits`                    | `300`          | Number of commits to initially load                                                   |
 | `loadMoreCommits`                       | `100`          | Number of additional commits to load at a time                                        |
