@@ -143,3 +143,54 @@
 | TC-034  | checkout=false, createBranch 成功                     | Normal - standard                                                          | checkoutBranch が呼ばれない、status: null                                  | -                      |
 | TC-035  | createBranch 失敗（エラーメッセージ返却）             | Exception - handled error                                                  | status にエラーメッセージ、checkoutBranch は呼ばれない                     | -                      |
 | TC-036  | checkout 未指定（undefined）                          | Boundary - legacy compat                                                   | checkoutBranch が呼ばれない（後方互換、従来動作）                          | レガシーメッセージ対応 |
+
+## S15: loadCommits 入力正規化 (Feature 040)
+
+> Origin: Feature 040 (settings-and-copy-polish) (light-spec-plan)
+> Added: 2026-05-17
+> Status: active
+> Supersedes: -
+> Signature: `case "loadCommits":` の message handler
+> Target Path: `src/gitGraphView.ts`
+> Test File: `tests/src/gitGraphView.test.ts`
+
+webview から届く `loadCommits` メッセージの `maxCommits` が 0 / 負値であっても、`DataSource.getCommits()` に渡る値が常に 1 以上になることを検証する。
+
+| Case ID | Input / Precondition   | Perspective (Normal / Validation / Exception / External / Boundary / Type) | Expected Result                         | Notes                          |
+| ------- | ---------------------- | -------------------------------------------------------------------------- | --------------------------------------- | ------------------------------ |
+| TC-068  | `msg.maxCommits = 0`   | Boundary - lower bound                                                     | `DataSource.getCommits()` 第3引数が `1` | 0 → 1 正規化（メッセージ境界） |
+| TC-069  | `msg.maxCommits = -10` | Validation - negative                                                      | `DataSource.getCommits()` 第3引数が `1` | 負値 → 1 正規化                |
+
+## S16: viewDiff エラーハンドリング
+
+> Origin: test-plan (既存コード網羅)
+> Added: 2026-05-17
+> Status: active
+> Supersedes: -
+> Signature: `private async viewDiff(repo, commitHash, oldFilePath, newFilePath, type, compareWithHash?): Promise<boolean>`
+> Target Path: `src/gitGraphView.ts`
+
+`vscode.commands.executeCommand("vscode.diff", ...)` 呼び出しを 3 つの try/catch（compareWithHash 指定時、Uncommitted モード、通常コミット比較）で包み、いずれも例外時は `false` を返す。
+
+| Case ID | Input / Precondition                                                                             | Perspective (Normal / Validation / Exception / External / Boundary / Type) | Expected Result                                            | Notes              |
+| ------- | ------------------------------------------------------------------------------------------------ | -------------------------------------------------------------------------- | ---------------------------------------------------------- | ------------------ |
+| TC-070  | `compareWithHash !== undefined`、`vscode.commands.executeCommand("vscode.diff", ...)` が reject  | Exception - vscode.diff failure (compare mode)                             | `viewDiff` が `false` を返す。例外は呼び出し元へ伝播しない | L727-L741 の catch |
+| TC-071  | `compareWithHash === undefined`、`commitHash === UNCOMMITTED_CHANGES_HASH`、`vscode.diff` reject | Exception - vscode.diff failure (uncommitted)                              | `viewDiff` が `false` を返す                               | L748-L763 の catch |
+| TC-072  | `compareWithHash === undefined`、通常コミット、`vscode.diff` reject                              | Exception - vscode.diff failure (normal commit)                            | `viewDiff` が `false` を返す                               | L775-L786 の catch |
+
+## S17: 未登録リポジトリのメッセージガード
+
+> Origin: test-plan (既存コード網羅)
+> Added: 2026-05-17
+> Status: active
+> Supersedes: -
+> Signature: `onDidReceiveMessage` 内の早期 return ガード
+> Target Path: `src/gitGraphView.ts:148-154`
+
+`msg.command` が `copyToClipboard` / `loadRepos` 以外で、かつ `"repo" in msg` を満たす場合に、`msg.repo` が `RepoManager.getRepos()` のキーに含まれているかを検査し、未登録なら DataSource を呼ばずに早期 return する。
+
+| Case ID | Input / Precondition                                                                     | Perspective (Normal / Validation / Exception / External / Boundary / Type) | Expected Result                                                             | Notes                    |
+| ------- | ---------------------------------------------------------------------------------------- | -------------------------------------------------------------------------- | --------------------------------------------------------------------------- | ------------------------ |
+| TC-073  | `msg.command = "loadCommits"`、`msg.repo` が `RepoManager.getRepos()` のキーに含まれない | Validation - unregistered repo                                             | `DataSource.getCommits` は呼ばれず、`repoFileWatcher.unmute` も実行されない | 既存登録のみを許可       |
+| TC-074  | `msg.command = "copyToClipboard"`、`msg.repo` が未登録                                   | Normal - bypass guard                                                      | ガードをバイパスし `copyToClipboard` utility が呼ばれる                     | ガード対象外コマンド     |
+| TC-075  | `msg.command = "loadRepos"`、`msg.repo` プロパティ無し                                   | Normal - bypass guard (no repo key)                                        | `respondLoadRepos` が呼ばれる                                               | `"repo" in msg` が false |

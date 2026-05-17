@@ -129,3 +129,25 @@
 | TC-181  | ナビゲーション失敗（newIndex=-1 or DOM 要素なし）    | Normal - no nav                                                            | preventDefault() と stopPropagation() が呼び出されない | イベント透過   |
 | TC-182  | Shift のみ + ArrowUp（Ctrl/Cmd なし）                | Validation - rejected precondition                                         | Arrow キー処理スキップ（修飾キーパターン不一致）       | フォールスルー |
 | TC-183  | Alt + ArrowUp（Ctrl/Cmd なし）                       | Validation - rejected precondition                                         | Arrow キー処理スキップ（修飾キーパターン不一致）       | フォールスルー |
+
+## S40: handleEscape() 優先順位チェーン
+
+> Origin: test-plan (既存コード網羅)
+> Added: 2026-05-17
+> Status: active
+> Supersedes: -
+> Signature: `handleEscape(): void`
+> Target Path: `web/main.ts`
+
+Escape キー押下時の dismissal チェーン: `contextMenu → dialog → repoDropdown → branchDropdown → authorDropdown → findWidget → expandedCommit`。各レベルで該当する UI が active なら hide / close を呼んで早期 return し、後段は実行されない。
+
+| Case ID | Input / Precondition                                      | Perspective (Normal / Validation / Exception / External / Boundary / Type) | Expected Result                                                                             | Notes                          |
+| ------- | --------------------------------------------------------- | -------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------- | ------------------------------ |
+| TC-221  | `isContextMenuActive()` が true                           | Normal - first priority                                                    | `hideContextMenu()` が 1 回呼ばれ、以降の hide 系（dialog/dropdown/findWidget）は呼ばれない | 最優先で context menu を閉じる |
+| TC-222  | contextMenu inactive、`isDialogActive()` true             | Normal - second priority                                                   | `hideDialog()` が 1 回呼ばれ、dropdown / findWidget / expandedCommit は触られない           | dialog 優先                    |
+| TC-223  | contextMenu/dialog inactive、`repoDropdown.isOpen()` true | Normal - third priority                                                    | `repoDropdown.close()` が呼ばれ、後段の branch/author dropdown は close されない            | repo dropdown のみ閉じる       |
+| TC-224  | repo dropdown も閉じている、`findWidget.isVisible()` true | Normal - findWidget priority                                               | `findWidget.close()` が呼ばれ、`hideCommitDetails` は呼ばれない                             | findWidget が次優先            |
+| TC-225  | findWidget も非表示、`expandedCommit !== null`            | Normal - last fallback                                                     | `hideCommitDetails()` が呼ばれる                                                            | チェーンの最後段               |
+| TC-226  | 上記すべて非アクティブ                                    | Boundary - no active UI                                                    | hide/close 系 API は一切呼ばれず、Escape は no-op として透過する                            | DOM 状態に副作用なし           |
+| TC-227  | `contextMenu` と `dialog` が両方 active                   | Validation - priority order                                                | `hideContextMenu()` のみ呼ばれ、`hideDialog()` は呼ばれない                                 | contextMenu が dialog より優先 |
+| TC-228  | `repoDropdown` と `branchDropdown` が両方 open            | Validation - priority order                                                | `repoDropdown.close()` のみ呼ばれ、`branchDropdown.close()` は呼ばれない                    | 宣言順に最初に open のもの優先 |

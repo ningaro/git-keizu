@@ -148,3 +148,18 @@
 | TC-040  | 通常コミット menu の `More...` submenu を確認     | Validation - target-only tagging                                           | `Add Tag...` のみ `recentActionId = "commit.addTag"` を持ち、`Checkout...` / `Revert...` / `Reset...` は recent 対象外のまま                       | destructive / detached 除外  |
 | TC-041  | `Create Branch...` ダイアログ submit              | Normal - record before send                                                | submit callback 実行時に `recordRecentAction(repo, "commit.createBranch")` が `sendMessage(RequestCreateBranch)` より先に 1 回呼ばれる             | 呼出順保証                   |
 | TC-042  | `Add Tag...` menu item を押してダイアログ表示のみ | Boundary - dialog cancel                                                   | `showFormDialog` は開くが、submit callback 未実行の時点では `recordRecentAction(...)` は呼ばれない                                                 | キャンセルで履歴を増やさない |
+
+## S9: Create Branch ダイアログ翻訳キー (Feature 040)
+
+> Origin: Feature 040 (settings-and-copy-polish) (light-spec-plan)
+> Added: 2026-05-17
+> Status: active
+> Supersedes: -
+> Signature: `buildCommitContextMenuItems(...)`
+> Target Path: `web/commitMenu.ts`
+
+commit 起点の Create Branch ダイアログプロンプトが、stash 起点とは別の翻訳キーを使用していることを検証する。
+
+| Case ID | Input / Precondition                                                                              | Perspective (Normal / Validation / Exception / External / Boundary / Type) | Expected Result                                                                            | Notes                                 |
+| ------- | ------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------ | ------------------------------------- |
+| TC-043  | webviewMessages に commit-origin 翻訳を注入した状態で Create Branch onClick → showFormDialog 確認 | Normal - localized prompt                                                  | プロンプト文字列が「コミット」「作成するブランチ名を入力してください」を含む日本語訳になる | commit 起点キーが利用されることの保証 |

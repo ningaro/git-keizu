@@ -6,14 +6,14 @@
 > Language: TypeScript
 > Test Framework: Vitest
 > Total Shards: 4
-> Total Sections: 20
-> Total Cases: 67
+> Total Sections: 23
+> Total Cases: 75
 
 ## Shards
 
 | Shard File                           | Responsibility              | Sections | Cases | Last Updated |
 | ------------------------------------ | --------------------------- | -------- | ----- | ------------ |
-| 01-message-routing-01.md             | message-routing             | 9        | 30    | 2026-05-02   |
+| 01-message-routing-01.md             | message-routing             | 12       | 38    | 2026-05-17   |
 | 02-state-lifecycle-01.md             | state-lifecycle             | 6        | 18    | 2026-05-02   |
 | 03-worktree-actions-01.md            | worktree-actions            | 3        | 16    | 2026-05-02   |
 | 04-context-menu-recent-actions-01.md | context-menu-recent-actions | 2        | 3     | 2026-05-10   |
@@ -37,3 +37,5 @@
 | Feature 033 (watch-refresh-scope) Task 3                     | 02-state-lifecycle-01.md                           |
 | Feature 034 (context-menu-recent-actions) Task 1             | 04-context-menu-recent-actions-01.md               |
 | Feature 039 (show-recent-actions-runtime-sync)               | 04-context-menu-recent-actions-01.md               |
+| Feature 040 (settings-and-copy-polish) (light-spec-plan)     | 01-message-routing-01.md                           |
+| test-plan (既存コード網羅)                                   | 01-message-routing-01.md                           |
