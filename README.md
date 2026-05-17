@@ -1,7 +1,7 @@
 <div align="center">
   <img src="./resources/icon.png" height="128"/>
   <samp>
-    <h1>Git Keizu for Visual Studio Code</h1>
+    <h1>Git Keizu</h1>
     <h3>View your Git history as a graph, and do common Git actions directly from it</h3>
   </samp>
 </div>
@@ -11,7 +11,7 @@
 [![vscode installs](https://img.shields.io/visual-studio-marketplace/i/numlia-vs.git-keizu?label=install)](https://marketplace.visualstudio.com/items?itemName=numlia-vs.git-keizu)
 [![open-vsx downloads](https://img.shields.io/open-vsx/dt/numlia-vs/git-keizu?label=open-vsx)](https://open-vsx.org/extension/numlia-vs/git-keizu)
 
-**Git Keizu** is a fast, focused **git history graph** for Visual Studio Code. View all your branches, commits, stashes, and tags in one interactive visual graph — and perform git actions (checkout, merge, rebase, cherry-pick, stash) and manage git worktrees directly from it, without ever opening a terminal.
+**Git Keizu** is a fast, focused **git history graph**. View all your branches, commits, stashes, and tags in one interactive visual graph — and perform git actions (checkout, merge, rebase, cherry-pick, stash) and manage git worktrees directly from it, without ever opening a terminal.
 
 An actively maintained fork of [Git Graph](https://github.com/mhutchie/vscode-git-graph) (MIT, 2019), intentionally kept focused on the essentials. If the core graph experience is what you're after, this is for you.
 
