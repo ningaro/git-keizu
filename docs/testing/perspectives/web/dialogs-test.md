@@ -58,3 +58,22 @@
 | TC-014  | info テキストに HTML 特殊文字 `<script>&"'` を含む | Boundary - special chars (XSS)                                             | title 属性内で HTML エスケープされる                                 | XSS 防止       |
 | TC-015  | multi フォーム（text + checkbox with info）        | Normal - multi layout                                                      | checkbox 行の適切な位置に info icon が配置される                     | レイアウト確認 |
 | TC-016  | single フォーム（checkbox with info のみ）         | Normal - single layout                                                     | checkbox label 直後に info icon が配置される                         | レイアウト確認 |
+
+## S4: showFormDialog() DialogInput plain text エスケープ (Feature 041)
+
+> Origin: Feature 041 (refresh-contention-and-dialog-escape) (light-spec-plan)
+> Added: 2026-05-22
+> Status: active
+> Supersedes: -
+> Signature: `showFormDialog(message, inputs, actionName, actioned, sourceElem, afterCreate?)`
+> Target Path: `web/dialogs.ts`
+
+`DialogInput` 由来の文字列 (`name`, `default`, `placeholder`, `options[].name`, `options[].value`) を HTML 連結直前にすべて `escapeHtml()` で処理し、危険文字が DOM 解析されないことを検証する。`message` 引数は既存契約で HTML を許容するためエスケープ対象外。
+
+| Case ID | Input / Precondition                                                                                | Perspective (Normal / Validation / Exception / External / Boundary / Type) | Expected Result                                                                                       | Notes                  |
+| ------- | --------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------- | ---------------------- |
+| TC-017  | multi form の `text` input `name = "<img onerror=...>"` で `showFormDialog` を呼ぶ                  | Boundary - special chars in label                                          | label セルに `<img>` 要素が生成されず、テキストとして `<img onerror=...>` がそのまま表示される        | name 描画境界          |
+| TC-018  | `text` input `default = '" autofocus oninput="alert(1)'`, `placeholder = "</input><script>"` で呼ぶ | Boundary - special chars in attributes                                     | `value` / `placeholder` 属性が破壊されず、追加の `<script>` 要素が DOM に生成されない                 | 属性境界               |
+| TC-019  | `select` option `value = "1\""`, `name = "<b>boom</b>"` で呼ぶ                                      | Boundary - special chars in option                                         | `<option>` が 1 件のみ生成され、表示テキストが `<b>boom</b>`、`select.value` 読み出し値が `1"` となる | option 境界 + 値往復   |
+| TC-020  | multi form の `checkbox` input `name = "</td><script>"` で呼ぶ                                      | Boundary - special chars in checkbox name                                  | 追加の `</td>` / `<script>` 要素が生成されず、テキストとして表示される                                | checkbox name 描画境界 |
+| TC-021  | `message = "<b>hi</b>"` を渡し、`text` input `name = "x"` で呼ぶ                                    | Normal - message HTML preserved                                            | `message` の `<b>` 要素が太字として描画され、エスケープされていない                                   | 既存 HTML 契約維持     |
