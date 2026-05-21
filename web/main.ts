@@ -84,6 +84,11 @@ function getFileViewToggle(mode: FileViewType): { icon: string; title: string } 
     : { icon: svgIcons.listView, title: t("toolbar.switchToListView") };
 }
 
+type PendingCommitLoad = {
+  hard: boolean;
+  callbacks: ((changes: boolean) => void)[];
+};
+
 function buildAuthorOptions(
   authors: string[],
   selectedAuthors: string[]
@@ -125,6 +130,8 @@ class GitKeizuView {
 
   private loadBranchesCallback: ((changes: boolean, isRepo: boolean) => void) | null = null;
   private loadCommitsCallback: ((changes: boolean) => void) | null = null;
+  private pendingLoadBranchesAndCommitsHard: boolean | null = null;
+  private pendingLoadCommits: PendingCommitLoad | null = null;
   private worktrees: GG.WorktreeMap = {};
 
   private commitOrdering: GG.CommitOrdering;
@@ -283,12 +290,14 @@ class GitKeizuView {
         this.authorDropdown.setOptions(options, selected);
       }
     }
-    this.loadRepos(this.gitRepos, lastActiveRepo);
-    this.requestLoadBranchesAndCommits(false);
+    const refreshedDuringLoadRepos = this.loadRepos(this.gitRepos, lastActiveRepo);
+    if (!refreshedDuringLoadRepos) {
+      this.requestLoadBranchesAndCommits(false);
+    }
   }
 
   /* Loading Data */
-  public loadRepos(repos: GG.GitRepoSet, lastActiveRepo: string | null) {
+  public loadRepos(repos: GG.GitRepoSet, lastActiveRepo: string | null): boolean {
     viewState.repos = repos;
     this.gitRepos = repos;
     this.saveState();
@@ -316,7 +325,9 @@ class GitKeizuView {
 
     if (changedRepo) {
       this.refresh(true);
+      return true;
     }
+    return false;
   }
 
   public selectRepo(repo: string) {
@@ -387,10 +398,12 @@ class GitKeizuView {
     this.triggerLoadBranchesCallback(true, isRepo);
   }
   private triggerLoadBranchesCallback(changes: boolean, isRepo: boolean) {
-    if (this.loadBranchesCallback !== null) {
-      this.loadBranchesCallback(changes, isRepo);
-      this.loadBranchesCallback = null;
+    const callback = this.loadBranchesCallback;
+    this.loadBranchesCallback = null;
+    if (callback !== null) {
+      callback(changes, isRepo);
     }
+    this.flushPendingLoadBranchesAndCommits();
   }
 
   public loadCommits(
@@ -472,10 +485,12 @@ class GitKeizuView {
     this.updateCurrentBtnState();
   }
   private triggerLoadCommitsCallback(changes: boolean) {
-    if (this.loadCommitsCallback !== null) {
-      this.loadCommitsCallback(changes);
-      this.loadCommitsCallback = null;
+    const callback = this.loadCommitsCallback;
+    this.loadCommitsCallback = null;
+    if (callback !== null) {
+      callback(changes);
     }
+    this.flushPendingLoadCommits();
   }
 
   public loadAvatar(email: string, image: string) {
@@ -511,7 +526,6 @@ class GitKeizuView {
     hard: boolean,
     loadedCallback: (changes: boolean, isRepo: boolean) => void
   ) {
-    if (this.loadBranchesCallback !== null) return;
     this.loadBranchesCallback = loadedCallback;
     sendMessage({
       command: "loadBranches",
@@ -521,7 +535,10 @@ class GitKeizuView {
     });
   }
   private requestLoadCommits(hard: boolean, loadedCallback: (changes: boolean) => void) {
-    if (this.loadCommitsCallback !== null) return;
+    if (this.loadCommitsCallback !== null) {
+      this.queueLoadCommits(hard, loadedCallback);
+      return;
+    }
     this.loadCommitsCallback = loadedCallback;
     sendMessage({
       command: "loadCommits",
@@ -542,6 +559,10 @@ class GitKeizuView {
     return this.commitOrdering;
   }
   private requestLoadBranchesAndCommits(hard: boolean) {
+    if (this.loadBranchesCallback !== null) {
+      this.queueLoadBranchesAndCommits(hard);
+      return;
+    }
     this.requestLoadBranches(hard, (branchChanges: boolean, isRepo: boolean) => {
       if (isRepo) {
         this.requestLoadCommits(hard || branchChanges, (commitChanges: boolean) => {
@@ -552,6 +573,37 @@ class GitKeizuView {
         });
       } else {
         sendMessage({ command: "loadRepos", check: true });
+      }
+    });
+  }
+  private queueLoadBranchesAndCommits(hard: boolean) {
+    if (this.pendingLoadBranchesAndCommitsHard === null) {
+      this.pendingLoadBranchesAndCommitsHard = hard;
+      return;
+    }
+    this.pendingLoadBranchesAndCommitsHard = this.pendingLoadBranchesAndCommitsHard || hard;
+  }
+  private flushPendingLoadBranchesAndCommits() {
+    if (this.pendingLoadBranchesAndCommitsHard === null) return;
+    const hard = this.pendingLoadBranchesAndCommitsHard;
+    this.pendingLoadBranchesAndCommitsHard = null;
+    this.requestLoadBranchesAndCommits(hard);
+  }
+  private queueLoadCommits(hard: boolean, loadedCallback: (changes: boolean) => void) {
+    if (this.pendingLoadCommits === null) {
+      this.pendingLoadCommits = { hard, callbacks: [loadedCallback] };
+      return;
+    }
+    this.pendingLoadCommits.hard = this.pendingLoadCommits.hard || hard;
+    this.pendingLoadCommits.callbacks.push(loadedCallback);
+  }
+  private flushPendingLoadCommits() {
+    if (this.pendingLoadCommits === null) return;
+    const pending = this.pendingLoadCommits;
+    this.pendingLoadCommits = null;
+    this.requestLoadCommits(pending.hard, (changes: boolean) => {
+      for (const cb of pending.callbacks) {
+        cb(changes);
       }
     });
   }

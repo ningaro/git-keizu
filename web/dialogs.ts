@@ -99,24 +99,24 @@ export function showFormDialog(
     if (input.type === "checkbox" && input.info) {
       infoHtml = `<span class="dialogInfo" title="${escapeHtml(input.info)}">${svgIcons.info}</span>`;
     }
-    html += `<tr>${multiElementForm && !isCheckbox ? `<td>${input.name}</td>` : ""}<td>`;
+    html += `<tr>${multiElementForm && !isCheckbox ? `<td>${escapeHtml(input.name)}</td>` : ""}<td>`;
     if (input.type === "select") {
       html += `<select id="dialogInput${i}">`;
       for (let j = 0; j < input.options.length; j++) {
-        html += `<option value="${input.options[j].value}"${input.options[j].value === input.default ? " selected" : ""}>${input.options[j].name}</option>`;
+        html += `<option value="${escapeHtml(input.options[j].value)}"${input.options[j].value === input.default ? " selected" : ""}>${escapeHtml(input.options[j].name)}</option>`;
       }
       html += "</select>";
     } else if (input.type === "checkbox") {
-      html += `<span class="dialogFormCheckbox"><label><input id="dialogInput${i}" type="checkbox"${input.value ? " checked" : ""}/><span class="customCheckbox"></span>${multiElementForm ? "" : input.name}</label>${multiElementForm ? "" : infoHtml}</span>`;
+      html += `<span class="dialogFormCheckbox"><label><input id="dialogInput${i}" type="checkbox"${input.value ? " checked" : ""}/><span class="customCheckbox"></span>${multiElementForm ? "" : escapeHtml(input.name)}</label>${multiElementForm ? "" : infoHtml}</span>`;
     } else {
       let placeholder =
         input.type === "text" && input.placeholder !== null
-          ? ` placeholder="${input.placeholder}"`
+          ? ` placeholder="${escapeHtml(input.placeholder)}"`
           : "";
-      html += `<input id="dialogInput${i}" type="text" value="${input.default}"${placeholder}/>`;
+      html += `<input id="dialogInput${i}" type="text" value="${escapeHtml(input.default)}"${placeholder}/>`;
       if (input.type === "text-ref") textRefInput = i;
     }
-    html += `</td>${multiElementForm && isCheckbox ? `<td>${input.name}${infoHtml}</td>` : ""}</tr>`;
+    html += `</td>${multiElementForm && isCheckbox ? `<td>${escapeHtml(input.name)}${infoHtml}</td>` : ""}</tr>`;
   }
   html += "</table>";
   showDialog(

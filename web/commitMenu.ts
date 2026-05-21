@@ -10,6 +10,20 @@ import {
   sendMessage
 } from "./utils";
 
+function buildMergeParentOptions(
+  parentHashes: string[],
+  commits: GitCommitNode[],
+  commitLookup: { [hash: string]: number }
+): { name: string; value: string }[] {
+  return parentHashes.map((parentHash, index) => ({
+    name:
+      typeof commitLookup[parentHash] === "number"
+        ? `${abbrevCommit(parentHash)}: ${commits[commitLookup[parentHash]].message}`
+        : abbrevCommit(parentHash),
+    value: (index + 1).toString()
+  }));
+}
+
 export function buildCommitContextMenuItems(
   repo: string,
   hash: string,
@@ -195,14 +209,7 @@ export function buildCommitContextMenuItems(
           sourceElem
         );
       } else {
-        const options = parentHashes.map((parentHash, index) => ({
-          name: `${abbrevCommit(parentHash)}${
-            typeof commitLookup[parentHash] === "number"
-              ? `: ${commits[commitLookup[parentHash]].message}`
-              : ""
-          }`,
-          value: (index + 1).toString()
-        }));
+        const options = buildMergeParentOptions(parentHashes, commits, commitLookup);
         showFormDialog(
           t(
             "Are you sure you want to cherry pick merge commit {0}? Choose the parent hash on the main branch, to cherry pick the commit relative to:",
@@ -251,14 +258,7 @@ export function buildCommitContextMenuItems(
           sourceElem
         );
       } else {
-        const options = parentHashes.map((parentHash, index) => ({
-          name: `${abbrevCommit(parentHash)}${
-            typeof commitLookup[parentHash] === "number"
-              ? `: ${commits[commitLookup[parentHash]].message}`
-              : ""
-          }`,
-          value: (index + 1).toString()
-        }));
+        const options = buildMergeParentOptions(parentHashes, commits, commitLookup);
         showSelectDialog(
           t(
             "Are you sure you want to revert merge commit {0}? Choose the parent hash on the main branch, to revert the commit relative to:",
