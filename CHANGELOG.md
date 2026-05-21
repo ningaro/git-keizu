@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.7.8] - 2026-05-22
+
+### Fixed
+
+- **Refresh and filter changes are no longer silently dropped during a load**: Clicking Refresh, changing the branch filter or author filter, reordering commits, or triggering Load More while a `loadBranches` or `loadCommits` request was still in-flight would previously discard the action with no visible feedback. These requests are now queued and automatically re-sent once the current response arrives — the `hard` flag is OR-merged so no reload signal is lost, and all completion callbacks (including the one that re-enables auto Load More) are preserved and run on the queued response.
+- **Dialog inputs with HTML characters no longer corrupt the form layout**: Labels, text defaults, placeholders, and select option names and values in form dialogs are now HTML-escaped before rendering, preventing commit messages or branch names containing `<`, `>`, `"`, `'`, or `&` from breaking the dialog appearance.
+
 ## [0.7.7] - 2026-05-17
 
 ### Added
@@ -392,7 +399,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 Initial release as Git Keizu — forked from [neo-git-graph](https://github.com/asispts/neo-git-graph) (originally [Git Graph](https://github.com/mhutchie/vscode-git-graph) by mhutchie, MIT).
 
-[Unreleased]: https://github.com/numlia/git-keizu/compare/v0.7.7...HEAD
+[Unreleased]: https://github.com/numlia/git-keizu/compare/v0.7.8...HEAD
+[0.7.8]: https://github.com/numlia/git-keizu/compare/v0.7.7...v0.7.8
 [0.7.7]: https://github.com/numlia/git-keizu/compare/v0.7.6...v0.7.7
 [0.7.6]: https://github.com/numlia/git-keizu/compare/v0.7.5...v0.7.6
 [0.7.5]: https://github.com/numlia/git-keizu/compare/v0.7.4...v0.7.5
