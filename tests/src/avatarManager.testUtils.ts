@@ -54,6 +54,7 @@ export const IMAGE_CONTENT_TYPE_SVG = "image/svg+xml";
 export const INVALID_GITHUB_REMOTE_URL = `https://github.com/${GITHUB_REMOTE_OWNER}`;
 export const INVALID_IMAGE_HOST_URL = "https://example.com/avatar.png";
 export const INVALID_IMAGE_URL = "not a url";
+export const INVALID_JSON_RESPONSE_BODY = "{invalid-json";
 export const NETWORK_ERROR_MESSAGE = "network failed";
 export const NON_IMAGE_CONTENT_TYPE = "text/html";
 export const SHORT_COMMITS = ["commit-0", "commit-1", "commit-2"];

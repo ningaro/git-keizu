@@ -452,9 +452,9 @@ describe("AvatarManager public behavior", () => {
   });
 
   describe("getRemoteSource", () => {
-    it("TC-020: ignores cached remote source objects because the cache hit check is incorrect", async () => {
-      // Case: TC-020
-      // Given: remoteSourceCache already contains an object entry for the repo and getRemoteUrl resolves to GitLab.
+    it("TC-083: returns cached remote source objects without reading DataSource again", async () => {
+      // Case: TC-083
+      // Given: remoteSourceCache already contains an object entry for the repo.
       const harness = createAvatarManager();
       const request = createAvatarRequest();
       harness.manager.remoteSourceCache[DEFAULT_REPO_PATH] = GITHUB_REMOTE_SOURCE;
@@ -463,10 +463,9 @@ describe("AvatarManager public behavior", () => {
       // When: getRemoteSource is called for that repo.
       const result = await harness.manager.getRemoteSource(request);
 
-      // Then: The method still calls DataSource and returns the newly parsed GitLab source.
-      expect(harness.dataSource.getRemoteUrl).toHaveBeenCalledTimes(1);
-      expect(harness.dataSource.getRemoteUrl).toHaveBeenCalledWith(DEFAULT_REPO_PATH);
-      expect(result).toEqual(GITLAB_REMOTE_SOURCE);
+      // Then: The cached object is returned and DataSource is not consulted.
+      expect(result).toBe(GITHUB_REMOTE_SOURCE);
+      expect(harness.dataSource.getRemoteUrl).not.toHaveBeenCalled();
     });
 
     it("TC-021: parses GitHub remotes into owner/repo metadata and caches the result", async () => {

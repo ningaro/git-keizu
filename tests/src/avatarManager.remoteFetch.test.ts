@@ -19,6 +19,7 @@ import {
   GRAVATAR_DEFAULT_MISSING,
   httpsGetMock,
   IDENTICON_IMAGE_NAME,
+  INVALID_JSON_RESPONSE_BODY,
   LONG_COMMITS,
   mockHttpsError,
   mockHttpsResponse,
@@ -205,6 +206,34 @@ describe("AvatarManager remote fetch flows", () => {
       // Then: The request falls back to the Gravatar provider.
       expect(fetchFromGravatarSpy).toHaveBeenCalledTimes(1);
       expect(fetchFromGravatarSpy).toHaveBeenCalledWith(request);
+    });
+
+    it("TC-084: falls back to Gravatar when the GitHub response body is malformed JSON", async () => {
+      // Case: TC-084
+      // Given: The GitHub API responds with HTTP 200 and malformed JSON.
+      const harness = createAvatarManager();
+      const request = createAvatarRequest();
+      const fetchFromGravatarSpy = vi
+        .spyOn(harness.manager, "fetchFromGravatar")
+        .mockResolvedValue(undefined);
+      const downloadAvatarImageSpy = vi
+        .spyOn(harness.manager, "downloadAvatarImage")
+        .mockResolvedValue(PNG_IMAGE_NAME);
+      const saveAvatarSpy = vi.spyOn(harness.manager, "saveAvatar");
+      mockHttpsResponse({
+        chunks: [Buffer.from(INVALID_JSON_RESPONSE_BODY)],
+        statusCode: GITHUB_OK_STATUS
+      });
+
+      // When: fetchFromGithub completes that malformed response.
+      harness.manager.fetchFromGithub(request, GITHUB_REMOTE_OWNER, GITHUB_REMOTE_REPO);
+      await flushAsyncWork();
+
+      // Then: The request falls back to Gravatar without provider-specific image handling.
+      expect(fetchFromGravatarSpy).toHaveBeenCalledTimes(1);
+      expect(fetchFromGravatarSpy).toHaveBeenCalledWith(request);
+      expect(downloadAvatarImageSpy).not.toHaveBeenCalled();
+      expect(saveAvatarSpy).not.toHaveBeenCalled();
     });
 
     it("TC-032: requeues the request on GitHub 403 without falling back to Gravatar", async () => {
@@ -419,6 +448,34 @@ describe("AvatarManager remote fetch flows", () => {
       // Then: The request falls back to Gravatar.
       expect(fetchFromGravatarSpy).toHaveBeenCalledTimes(1);
       expect(fetchFromGravatarSpy).toHaveBeenCalledWith(request);
+    });
+
+    it("TC-085: falls back to Gravatar when the GitLab response body is malformed JSON", async () => {
+      // Case: TC-085
+      // Given: The GitLab API responds with HTTP 200 and malformed JSON.
+      const harness = createAvatarManager();
+      const request = createAvatarRequest();
+      const fetchFromGravatarSpy = vi
+        .spyOn(harness.manager, "fetchFromGravatar")
+        .mockResolvedValue(undefined);
+      const downloadAvatarImageSpy = vi
+        .spyOn(harness.manager, "downloadAvatarImage")
+        .mockResolvedValue(PNG_IMAGE_NAME);
+      const saveAvatarSpy = vi.spyOn(harness.manager, "saveAvatar");
+      mockHttpsResponse({
+        chunks: [Buffer.from(INVALID_JSON_RESPONSE_BODY)],
+        statusCode: GITLAB_OK_STATUS
+      });
+
+      // When: fetchFromGitLab completes that malformed response.
+      harness.manager.fetchFromGitLab(request);
+      await flushAsyncWork();
+
+      // Then: The request falls back to Gravatar without provider-specific image handling.
+      expect(fetchFromGravatarSpy).toHaveBeenCalledTimes(1);
+      expect(fetchFromGravatarSpy).toHaveBeenCalledWith(request);
+      expect(downloadAvatarImageSpy).not.toHaveBeenCalled();
+      expect(saveAvatarSpy).not.toHaveBeenCalled();
     });
 
     it("TC-041: requeues the request on GitLab 429 without falling back to Gravatar", async () => {
