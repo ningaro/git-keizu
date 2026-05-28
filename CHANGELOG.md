@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.7.9] - 2026-05-28
+
+### Fixed
+
+- **Avatar remote source cache now works correctly**: The cache that maps repositories to their remote host (GitHub or GitLab) was not read correctly for cached non-string values, causing every avatar lookup to re-query the data source even when the result was already stored. The check is now correct, eliminating redundant data source calls.
+- **Avatar fetches no longer fail silently on malformed provider responses**: When the GitHub or GitLab avatar API returns HTTP 200 with a body that cannot be parsed as JSON, the extension now falls back to Gravatar instead of letting the fetch pipeline fail silently. This makes avatar fetching resilient to transient or unexpected API responses.
+
 ## [0.7.8] - 2026-05-22
 
 ### Fixed
@@ -399,7 +406,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 Initial release as Git Keizu — forked from [neo-git-graph](https://github.com/asispts/neo-git-graph) (originally [Git Graph](https://github.com/mhutchie/vscode-git-graph) by mhutchie, MIT).
 
-[Unreleased]: https://github.com/numlia/git-keizu/compare/v0.7.8...HEAD
+[Unreleased]: https://github.com/numlia/git-keizu/compare/v0.7.9...HEAD
+[0.7.9]: https://github.com/numlia/git-keizu/compare/v0.7.8...v0.7.9
 [0.7.8]: https://github.com/numlia/git-keizu/compare/v0.7.7...v0.7.8
 [0.7.7]: https://github.com/numlia/git-keizu/compare/v0.7.6...v0.7.7
 [0.7.6]: https://github.com/numlia/git-keizu/compare/v0.7.5...v0.7.6

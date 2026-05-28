@@ -76,7 +76,7 @@ An actively maintained fork of [Git Graph](https://github.com/mhutchie/vscode-gi
 - **Smooth refresh**: Git operations update the graph in the background without blanking the view or losing your scroll position. The background file watcher monitors only Git-relevant state files (`HEAD`, `index`, `config`, `packed-refs`, `refs/*`), so build output and other working-tree changes no longer trigger unnecessary refreshes — noticeably less visual noise in large repositories. Linked worktrees are watched correctly: both the worktree's `.git` dir and the shared common git dir are covered. Refresh or filter actions performed while a load is in-flight are queued and automatically re-sent once the current load completes — no more silent "nothing happened" when clicking Refresh at the wrong moment.
 - **Auto load more commits**: Commits load automatically as you scroll to the bottom of the list — no manual button press needed (configurable)
 - **Dropdown overflow handling**: Long branch and repository names are truncated with an ellipsis; hover to see the full name in a tooltip
-- **Avatar Support**: Optionally fetch commit author avatars from GitHub, GitLab, or Gravatar
+- **Avatar Support**: Optionally fetch commit author avatars from GitHub, GitLab, or Gravatar — if a provider returns an unreadable response, the extension automatically falls back to Gravatar
 - **Multi-Repository**: Support for multiple Git repositories in one workspace
 - **Configurable**: Customize graph colors, style, date format, and more
 
