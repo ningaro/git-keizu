@@ -346,3 +346,32 @@
 | TC-080  | `checkAfter` がばらばらの項目を順に挿入  | Normal - standard                                                          | バイナリ挿入により `queue` が `checkAfter` 昇順で保持される                     | L446-455 |
 | TC-081  | 既存項目と同じ `checkAfter` の項目を挿入 | Boundary - equal                                                           | `<=` 比較により既存同値項目の後ろへ挿入される                                   | L452     |
 | TC-082  | 挿入前キュー長 > 0                       | Validation - rejected precondition                                         | `itemsAvailableCallback()` は呼ばれない                                         | L456     |
+
+## S21: getRemoteSource cache hit corrected behavior
+
+> Origin: light-spec-plan notes/features/042/spec.md
+> Added: 2026-05-28
+> Status: active
+> Supersedes: TC-020
+
+**Signature**: `private async getRemoteSource(avatarRequest: AvatarRequestItem)`
+**Target Path**: `src/avatarManager.ts:115-143`
+
+| Case ID | Input / Precondition                                      | Perspective (Normal / Validation / Exception / External / Boundary / Type) | Expected Result                                                                               | Notes |
+| ------- | --------------------------------------------------------- | -------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------- | ----- |
+| TC-083  | `remoteSourceCache[repo]` に `RemoteSource` object がある | Normal - cache hit                                                         | `getRemoteSource()` は同じ cached object を返し、`dataSource.getRemoteUrl(repo)` は呼ばれない | -     |
+
+## S22: provider JSON parse failure fallback
+
+> Origin: light-spec-plan notes/features/042/spec.md
+> Added: 2026-05-28
+> Status: active
+> Supersedes: -
+
+**Signature**: `private fetchFromGithub(...), private fetchFromGitLab(...)`
+**Target Path**: `src/avatarManager.ts:145-276`
+
+| Case ID | Input / Precondition             | Perspective (Normal / Validation / Exception / External / Boundary / Type) | Expected Result                                                                                                  | Notes |
+| ------- | -------------------------------- | -------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------- | ----- |
+| TC-084  | GitHub HTTP 200 + 不正 JSON body | External - malformed provider response                                     | `fetchFromGravatar(avatarRequest)` が1回呼ばれ、GitHub 用 `downloadAvatarImage()` と `saveAvatar()` は呼ばれない | -     |
+| TC-085  | GitLab HTTP 200 + 不正 JSON body | External - malformed provider response                                     | `fetchFromGravatar(avatarRequest)` が1回呼ばれ、GitLab 用 `downloadAvatarImage()` と `saveAvatar()` は呼ばれない | -     |

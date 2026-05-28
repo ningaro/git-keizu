@@ -1,16 +1,16 @@
 # テスト観点表インデックス
 
-> Auto-generated: 2026-05-22T00:00:00Z
+> Auto-generated: 2026-05-28T13:20:38Z
 > Total sources: 33
 > Total physical files: 46
-> Total sections: 293
-> Total cases: 1392
+> Total sections: 295
+> Total cases: 1395
 
 ## ソースファイル → 観点表（正引き）
 
 | Source File               | Storage Mode | Perspectives Entry                | Shards | Sections | Cases | Last Updated |
 | ------------------------- | ------------ | --------------------------------- | ------ | -------- | ----- | ------------ |
-| src/avatarManager.ts      | single-file  | src/avatarManager-test.md         | 1      | 20       | 82    | 2026-03-22   |
+| src/avatarManager.ts      | single-file  | src/avatarManager-test.md         | 1      | 22       | 85    | 2026-05-28   |
 | src/config.ts             | sharded      | src/config-test/INDEX.md          | 3      | 17       | 96    | 2026-05-17   |
 | src/dataSource.ts         | sharded      | src/dataSource-test/INDEX.md      | 3      | 26       | 155   | 2026-05-02   |
 | src/diffDocProvider.ts    | single-file  | src/diffDocProvider-test.md       | 1      | 6        | 30    | 2026-03-21   |
@@ -94,6 +94,7 @@
 | Feature 039 (show-recent-actions-runtime-sync)                        | src/extension-test.md, src/gitGraphView-test/INDEX.md, web/main-test/INDEX.md, web/messageHandler-test.md                                                                                                      |
 | Feature 040 (settings-and-copy-polish) (light-spec-plan)              | src/config-test/INDEX.md, src/gitGraphView-test/INDEX.md, web/commitMenu-test.md, web/main-test/INDEX.md, package.json-test.md, l10n/web/web.l10n.ja.json-test.md                                              |
 | Feature 041 (refresh-contention-and-dialog-escape) (light-spec-plan)  | web/main-test/INDEX.md, web/dialogs-test.md, web/commitMenu-test.md                                                                                                                                            |
+| light-spec-plan notes/features/042/spec.md                            | src/avatarManager-test.md                                                                                                                                                                                      |
 | test-plan                                                             | web/stashMenu-test.md                                                                                                                                                                                          |
 | test-plan (既存コード分析)                                            | src/avatarManager-test.md, src/diffDocProvider-test.md, src/extension-test.md, src/extensionState-test.md, src/repoFileWatcher-test.md, src/statusBarItem-test.md, web/branchLabels-test.md, web/dates-test.md |
 | test-plan (既存コード網羅)                                            | src/config-test/INDEX.md, src/gitGraphView-test/INDEX.md, src/repoManager-test.md, web/main-test/INDEX.md                                                                                                      |
