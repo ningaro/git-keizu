@@ -3,10 +3,16 @@ import * as path from "node:path";
 
 import * as vscode from "vscode";
 
-export type GitKeizuLocale = "en" | "ja";
+export type GitKeizuLocale = "en" | "ja" | "ru";
 
 export function getLocale(): GitKeizuLocale {
-  return vscode.env.language === "ja" || vscode.env.language.startsWith("ja-") ? "ja" : "en";
+  if (vscode.env.language === "ja" || vscode.env.language.startsWith("ja-")) {
+    return "ja";
+  }
+  if (vscode.env.language === "ru" || vscode.env.language.startsWith("ru-")) {
+    return "ru";
+  }
+  return "en";
 }
 
 export function t(message: string, ...args: (string | number | boolean)[]): string {

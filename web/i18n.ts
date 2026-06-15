@@ -1,7 +1,13 @@
-export type WebviewLocale = "en" | "ja";
+export type WebviewLocale = "en" | "ja" | "ru";
 
 export function getWebviewLocale(): WebviewLocale {
-  return globalThis.webviewLocale === "ja" ? "ja" : "en";
+  if (globalThis.webviewLocale === "ja") {
+    return "ja";
+  }
+  if (globalThis.webviewLocale === "ru") {
+    return "ru";
+  }
+  return "en";
 }
 
 export function t(key: string, ...args: (string | number)[]): string {

@@ -8,7 +8,7 @@ declare global {
   };
 
   var viewState: GG.GitKeizuViewState;
-  var webviewLocale: "en" | "ja";
+  var webviewLocale: "en" | "ja" | "ru";
   var webviewMessages: Record<string, string>;
 
   interface Config {

@@ -1,0 +1,22 @@
+{
+  "Added": "Добавлено",
+  "Added in {0}": "Добавлено в {0}",
+  "Authors:": "Авторы:",
+  "Branches:": "Ветки:",
+  "Current": "Текущая",
+  "Deleted": "Удалено",
+  "Deleted in {0}": "Удалено в {0}",
+  "Either the current workspace does not contain a Git repository, or the Git executable could not be found.": "Текущая рабочая область не содержит Git-репозиторий или исполняемый файл Git не найден.",
+  "Fetch --prune": "Fetch --prune",
+  "If you are using a portable Git installation, make sure you have set the Visual Studio Code Setting \"git.path\" to the path of your portable installation (e.g. \"C:\\\\Program Files\\\\Git\\\\bin\\\\git.exe\" on Windows).": "Если вы используете переносимую установку Git, убедитесь, что в параметре Visual Studio Code \"git.path\" указан путь к этой установке (например, \"C:\\\\Program Files\\\\Git\\\\bin\\\\git.exe\" в Windows).",
+  "Modified": "Изменено",
+  "Refresh": "Обновить",
+  "Repo:": "Репозиторий:",
+  "Search": "Поиск",
+  "Show Remote Branches": "Показать удаленные ветки",
+  "Unable to load Git Keizu": "Не удалось загрузить Git Keizu",
+  "Uncommitted": "Не закоммичено",
+  "View Git Keizu": "Показать Git Keizu",
+  "{0} ({1} ↔ {2})": "{0} ({1} ↔ {2})",
+  "{0} (Uncommitted - {1})": "{0} (не закоммичено - {1})"
+}
